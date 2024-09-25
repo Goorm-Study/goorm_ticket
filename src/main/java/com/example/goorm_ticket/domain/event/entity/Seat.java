@@ -27,7 +27,7 @@ public class Seat {
     private SeatStatus seatStatus;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false)
+    @JoinColumn(name = "order_id")
     private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -42,4 +42,11 @@ public class Seat {
         this.order = order;
         this.event = event;
     }
+
+
+    public void update(Order order, SeatStatus seatStatus) {
+        this.order = order;
+        this.seatStatus = seatStatus;
+    }
+
 }
