@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -47,17 +49,11 @@ public class OrderService {
         Order order = Order.createOrder(totalPrice, OrderStatus.PENDING, couponId, eventId, user);
         orderRepository.save(order);
 
-        try {
-            // seatStatus: `AVAILABLE` → `Locked`  (아직 예약 완료는 아님)
-            if (seat.getSeatStatus() == SeatStatus.AVAILABLE) {
-                seat.update(order, SeatStatus.LOCKED);
-                seatRepository.save(seat);
-            } else {
-                throw new Exception("이미 선택중인 좌석");
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        if (seat.getSeatStatus() != SeatStatus.AVAILABLE && seat.getSeatStatus() != SeatStatus.CANCELLED) {
+            throw new IllegalArgumentException("이미 선택중인 좌석");
         }
+        seat.update(order, SeatStatus.LOCKED);
+        seatRepository.save(seat);
 
         return OrderDto.Response.builder().seatId(seatId).build();
     }
@@ -71,22 +67,20 @@ public class OrderService {
         Long seatId = orderDto.getSeatId();
 
         // orderStatus: PENDING → CONFIRMED
+        if (order.getOrderStatus() != OrderStatus.PENDING) {
+            throw new IllegalArgumentException("결제할 수 없는 주문입니다.");
+        }
         order.update(OrderStatus.CONFIRMED);
         orderRepository.save(order);
 
         Seat seat = seatRepository.findById(seatId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 좌석입니다."));
 
         // seatStatus: `Locked` → `RESERVED`
-        try {
-            if (seat.getSeatStatus() == SeatStatus.LOCKED) {
-                seat.update(order, SeatStatus.RESERVED);
-                seatRepository.save(seat);
-            } else {
-                throw new Exception("예매완료된 좌석");
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        if (seat.getSeatStatus() != SeatStatus.LOCKED) {
+            throw new IllegalArgumentException("결제할 수 없는 좌석입니다");
         }
+        seat.update(order, SeatStatus.RESERVED);
+        seatRepository.save(seat);
 
         return OrderDto.Response.builder().seatId(seatId).build();
     }
@@ -98,6 +92,20 @@ public class OrderService {
         Long seatId = orderDto.getSeatId();
         Long userId = orderDto.getUserId();
 
+        Seat seat = seatRepository.findById(seatId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 좌석"));
+
+        Order order = seat.getOrder();
+
+        //orderStatus: `CANCELLED`
+        order.update(OrderStatus.CANCELLED);
+        orderRepository.save(order);
+
+
+        if (seat.getSeatStatus() != SeatStatus.RESERVED && seat.getSeatStatus() != SeatStatus.LOCKED) {
+            throw new IllegalArgumentException("취소할 수 없는 좌석");
+        }
+        seat.update(order, SeatStatus.CANCELLED);
+        seatRepository.save(seat);
 
         return OrderDto.Response.builder().seatId(seatId).build();
     }

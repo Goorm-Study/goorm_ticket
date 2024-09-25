@@ -25,7 +25,6 @@ public class OrderController {
 
     @PostMapping("/orders/cancel/{eventId}")
     public OrderDto.Response cancel(@PathVariable Long eventId, @RequestBody OrderDto.Cancel orderDto) {
-        OrderDto.Response response = orderService.cancel(eventId, orderDto);
-        return response;
+        return orderService.cancel(eventId, orderDto);
     }
 }
