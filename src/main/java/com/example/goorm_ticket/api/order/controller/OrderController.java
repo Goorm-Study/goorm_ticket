@@ -17,6 +17,12 @@ public class OrderController {
         return response;
     }
 
+    @PostMapping("/orders/payment/{orderId}")
+    public OrderDto.Response paymentCompleted(@PathVariable Long orderId, @RequestBody OrderDto.Payment orderDto) {
+        return orderService.payed(orderId, orderDto);
+    }
+
+
     @PostMapping("/orders/cancel/{eventId}")
     public OrderDto.Response cancel(@PathVariable Long eventId, @RequestBody OrderDto.Cancel orderDto) {
         OrderDto.Response response = orderService.cancel(eventId, orderDto);

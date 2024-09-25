@@ -17,6 +17,13 @@ public class OrderDto {
 
     @Getter
     @Builder
+    public static class Payment {
+        private Long userId;
+        private Long seatId;
+    }
+
+    @Getter
+    @Builder
     public static class Response {
         private Long seatId;
     }

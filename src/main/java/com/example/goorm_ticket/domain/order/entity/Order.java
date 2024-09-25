@@ -64,4 +64,7 @@ public class Order {
                 .build();
     }
 
+    public void update(OrderStatus orderStatus) {
+        this.orderStatus = orderStatus;
+    }
 }

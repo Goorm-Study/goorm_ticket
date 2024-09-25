@@ -33,17 +33,15 @@ public class OrderService {
         Seat seat = seatRepository.findById(seatId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 좌석입니다."));
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
-
-
         // 쿠폰 할인 적용
-        Double discountRate = couponRepository.findById(couponId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 쿠폰입니다."))
-                .getDiscountRate();
-
-
         int ticketPrice = seat.getEvent().getTicketPrice();
-        int discountPrice = (int) Math.floor(ticketPrice * discountRate / 100);
+        int discountPrice = 0;
+        if (couponId != null) {
+            Double discountRate = couponRepository.findById(couponId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 쿠폰입니다."))
+                    .getDiscountRate();
+            discountPrice = (int) Math.floor(ticketPrice * discountRate / 100);
+        }
         int totalPrice = ticketPrice - discountPrice;
-
 
         //orderStatus: `PENDING` (결제 완료 전)
         Order order = Order.createOrder(totalPrice, OrderStatus.PENDING, couponId, eventId, user);
@@ -65,11 +63,37 @@ public class OrderService {
     }
 
 
-    // 티켓 결제
+    // 티켓 결제 완료
+    @Transactional
+    public OrderDto.Response payed(Long orderId, OrderDto.Payment orderDto) {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문"));
 
+        Long seatId = orderDto.getSeatId();
+
+        // orderStatus: PENDING → CONFIRMED
+        order.update(OrderStatus.CONFIRMED);
+        orderRepository.save(order);
+
+        Seat seat = seatRepository.findById(seatId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 좌석입니다."));
+
+        // seatStatus: `Locked` → `RESERVED`
+        try {
+            if (seat.getSeatStatus() == SeatStatus.LOCKED) {
+                seat.update(order, SeatStatus.RESERVED);
+                seatRepository.save(seat);
+            } else {
+                throw new Exception("예매완료된 좌석");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return OrderDto.Response.builder().seatId(seatId).build();
+    }
 
 
     // 주문 취소
+    @Transactional
     public OrderDto.Response cancel(Long eventId, OrderDto.Cancel orderDto) {
         Long seatId = orderDto.getSeatId();
         Long userId = orderDto.getUserId();
