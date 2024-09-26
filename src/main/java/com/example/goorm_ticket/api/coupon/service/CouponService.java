@@ -2,9 +2,7 @@ package com.example.goorm_ticket.api.coupon.service;
 
 import com.example.goorm_ticket.domain.coupon.dto.CouponResponse;
 import com.example.goorm_ticket.domain.coupon.entity.Coupon;
-import com.example.goorm_ticket.domain.coupon.entity.CouponEmbeddable;
 import com.example.goorm_ticket.domain.coupon.repository.CouponRepository;
-import com.example.goorm_ticket.domain.user.dto.UserInfoResponse;
 import com.example.goorm_ticket.domain.user.entity.User;
 import com.example.goorm_ticket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,10 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -58,16 +53,4 @@ public class CouponService {
 
         return true;
     }
-
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public boolean decreaseCoupon(Long coupon_id, Long quantity) {
-        Coupon coupon = couponRepository.findById(coupon_id).orElseThrow();
-        coupon.decreaseQuantity(quantity);
-        couponRepository.save(coupon);
-
-        return true;
-    }
-
-
 }

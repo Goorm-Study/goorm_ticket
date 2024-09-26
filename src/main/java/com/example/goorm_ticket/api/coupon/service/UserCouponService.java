@@ -21,7 +21,7 @@ public class UserCouponService {
     private final CouponRepository couponRepository;
 
 
-    //  CouponService의 decrease()와 allocateCouponToUser()의 클래스를 분리해야 프록시 분리가 되서 트랜잭션이 분리됨
+    // 트랜잭션을 분리하려면 decrease()와 allocateCouponToUser()의 클래스를 분리해야 프록시 분리가 되서 트랜잭션이 정상적으로 분리됨
     @Transactional
     public CouponResponse allocateCouponToUser(Long user_id, Long coupon_id) {
         User user = userRepository.findById(user_id).orElseThrow();
