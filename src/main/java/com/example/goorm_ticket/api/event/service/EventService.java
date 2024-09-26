@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.domain.PageImpl;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,4 +36,15 @@ public class EventService {
 
         return new PageImpl<>(dtoList, eventsPage.getPageable(), eventsPage.getTotalElements());
     }
+
+    public EventResponseDto getEventById(Long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NoSuchElementException("Event not found with id " + eventId));
+
+        return EventResponseDto.builder()
+                .title(event.getTitle())
+                .ticketOpenTime(event.getTicketOpenTime())
+                .build();
+    }
+
 }
