@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -63,9 +64,11 @@ public class EventServiceTest {
         eventRepository.save(event);
 
         // when
-        EventResponseDto responseDto = eventService.getEventById(event.getId());
+        Optional<EventResponseDto> optionalResponseDto = eventService.getEventById(event.getId());
 
         // then
+        assertTrue(optionalResponseDto.isPresent());
+        EventResponseDto responseDto = optionalResponseDto.get(); // Optional에서 값 추출
         assertNotNull(responseDto);
         assertEquals(event.getTitle(), responseDto.getTitle());
         assertEquals(event.getTicketOpenTime(), responseDto.getTicketOpenTime());
@@ -77,12 +80,12 @@ public class EventServiceTest {
         // given
         Long nonExistentId = 999L;
 
-        // when & then
-        NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> {
-            eventService.getEventById(nonExistentId);
-        });
+        // when
+        Optional<EventResponseDto> result = eventService.getEventById(nonExistentId);
 
-        assertEquals("Event not found with id " + nonExistentId, exception.getMessage());
+        // then
+        assertTrue(result.isEmpty(), "이벤트가 존재하지 않아야 합니다.");
+
     }
 
     @Test
