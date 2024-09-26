@@ -26,6 +26,7 @@ import org.mockito.Mockito;
 import org.springframework.test.web.servlet.ResultActions;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -72,10 +73,10 @@ class EventControllerTest {
                 .build();
 
         // when
-        when(eventService.getEventById(1L)).thenReturn(eventResponseDto);
+        when(eventService.getEventById(1L)).thenReturn(Optional.of(eventResponseDto));
 
         // then
-        mockMvc.perform(get("/1")
+        mockMvc.perform(get("/events/1")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Test Event"));

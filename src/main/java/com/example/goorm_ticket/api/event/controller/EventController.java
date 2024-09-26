@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
 public class EventController {
@@ -32,15 +33,17 @@ public class EventController {
         return ResponseEntity.ok(events);
     }
 
-    @GetMapping("/{eventId}")
+    // 이벤트ID로 상세 정보 조회
+    @GetMapping("/events/{eventId}")
     public ResponseEntity<EventResponseDto> getEventById(@PathVariable Long eventId) {
-        EventResponseDto event = eventService.getEventById(eventId);
+        EventResponseDto event = eventService.getEventById(eventId)
+                .orElseThrow(() -> new NoSuchElementException("이벤트를 찾지 못했습니다. eventId: " + eventId));
         return ResponseEntity.ok(event);
     }
 
     // 특정 이벤트의 전체 좌석을 조회하는 API
-    @GetMapping("/events/{event_id}/seats")
-    public ResponseEntity<List<SeatResponseDto>> getSeatsByEventId(@PathVariable("event_id") Long eventId) {
+    @GetMapping("/events/{eventId}/seats")
+    public ResponseEntity<List<SeatResponseDto>> getSeatsByEventId(@PathVariable("eventId") Long eventId) {
         List<SeatResponseDto> seats = eventService.getSeatsByEventId(eventId);
         return ResponseEntity.ok(seats);
     }
