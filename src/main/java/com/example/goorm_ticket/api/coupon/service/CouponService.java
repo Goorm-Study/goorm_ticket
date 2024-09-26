@@ -2,12 +2,19 @@ package com.example.goorm_ticket.api.coupon.service;
 
 import com.example.goorm_ticket.domain.coupon.dto.CouponResponse;
 import com.example.goorm_ticket.domain.coupon.entity.Coupon;
+import com.example.goorm_ticket.domain.coupon.entity.CouponEmbeddable;
 import com.example.goorm_ticket.domain.coupon.repository.CouponRepository;
+import com.example.goorm_ticket.domain.user.dto.UserInfoResponse;
+import com.example.goorm_ticket.domain.user.entity.User;
+import com.example.goorm_ticket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -15,28 +22,52 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CouponService {
     private final CouponRepository couponRepository;
+    private final UserRepository userRepository;
 
     public List<CouponResponse> getAllCoupons() {
         List<Coupon> couponList = couponRepository.findAll();
         return couponList.stream()
-                .map(coupon -> new CouponResponse.builder()
+                .map(coupon -> CouponResponse.builder()
                         .id(coupon.getId())
                         .name(coupon.getName())
                         .quantity(coupon.getQuantity())
                         .discountRate(coupon.getDiscountRate())
-                        .expirationDate(coupon.getExpirationDate()))
+                        .expirationDate(coupon.getExpirationDate())
+                        .build()
+                )
+                .collect(Collectors.toList());
+    }
+
+    public List<CouponResponse> getUserCoupons(Long user_id) {
+        User user = userRepository.findById(user_id).orElseThrow();
+        return user.getCoupons().stream()
+                .map(coupon -> CouponResponse.builder()
+                        .id(coupon.getId())
+                        .name(coupon.getName())
+                        .build()
+                )
                 .collect(Collectors.toList());
     }
 
 
-    @Transactional
-    public boolean decreaseCoupon(Long id, Long quantity) {
-        Coupon coupon = couponRepository.findById(id).orElseThrow();
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean decreaseCoupon(Long coupon_id) {
+        Coupon coupon = couponRepository.findById(coupon_id).orElseThrow();
+        coupon.decreaseQuantity(1L);
+        couponRepository.save(coupon);
+
+        return true;
+    }
+
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean decreaseCoupon(Long coupon_id, Long quantity) {
+        Coupon coupon = couponRepository.findById(coupon_id).orElseThrow();
         coupon.decreaseQuantity(quantity);
         couponRepository.save(coupon);
 
         return true;
     }
 
-    // 유저 가져와서 decreaseCoupon 하고 유저 쿠폰에 넣어줘야 할듯
+
 }

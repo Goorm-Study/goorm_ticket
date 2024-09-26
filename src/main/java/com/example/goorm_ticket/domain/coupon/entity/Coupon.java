@@ -28,9 +28,8 @@ public class Coupon {
     @Column(nullable = false)
     private LocalDateTime expirationDate;
 
-    @Builder(access = AccessLevel.PRIVATE)
-    private Coupon(Long id, Long quantity, String name, Double discountRate, LocalDateTime expirationDate) {
-        this.id = id;
+    @Builder
+    private Coupon(Long quantity, String name, Double discountRate, LocalDateTime expirationDate) {
         this.quantity = quantity;
         this.name = name;
         this.discountRate = discountRate;
@@ -43,4 +42,6 @@ public class Coupon {
         }
         this.quantity -= quantity;
     }
+
+
 }
