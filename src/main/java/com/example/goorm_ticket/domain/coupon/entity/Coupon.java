@@ -37,4 +37,10 @@ public class Coupon {
         this.expirationDate = expirationDate;
     }
 
+    public void decreaseQuantity(Long quantity) {
+        if(this.quantity < quantity) {
+            throw new IllegalArgumentException("남은 쿠폰이 요청한 개수보다 적습니다.");
+        }
+        this.quantity -= quantity;
+    }
 }
