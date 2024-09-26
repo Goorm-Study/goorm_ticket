@@ -13,13 +13,12 @@ public class OrderController {
 
     @PostMapping("/orders/{eventId}")
     public OrderDto.Response order(@PathVariable Long eventId, @RequestBody OrderDto.Create orderDto) {
-        OrderDto.Response response = orderService.order(eventId, orderDto);
-        return response;
+        return orderService.order(eventId, orderDto);
     }
 
-    @PostMapping("/orders/payment/{orderId}")
-    public OrderDto.Response paymentCompleted(@PathVariable Long orderId, @RequestBody OrderDto.Payment orderDto) {
-        return orderService.payed(orderId, orderDto);
+    @PostMapping("/orders/payment")
+    public OrderDto.Response paymentCompleted(@RequestBody OrderDto.Payment orderDto) {
+        return orderService.payed(orderDto);
     }
 
 

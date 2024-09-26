@@ -1,5 +1,7 @@
 package com.example.goorm_ticket.api.order.service;
 
+import com.example.goorm_ticket.api.order.exception.BusinessException;
+import com.example.goorm_ticket.api.order.utils.DiscountCalculator;
 import com.example.goorm_ticket.domain.order.repository.CouponRepository;
 import com.example.goorm_ticket.domain.order.repository.OrderRepository;
 import com.example.goorm_ticket.domain.order.repository.SeatRepository;
@@ -14,7 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
+import java.util.Arrays;
+
+import static com.example.goorm_ticket.api.order.exception.BusinessException.*;
 
 @Service
 @RequiredArgsConstructor
@@ -26,87 +30,146 @@ public class OrderService {
     private final UserRepository userRepository;
     private final CouponRepository couponRepository;
 
+    /**
+     * 주문 생성
+     */
     @Transactional
     public OrderDto.Response order(Long eventId, OrderDto.Create orderDto) {
         Long couponId = orderDto.getCouponId();
         Long userId = orderDto.getUserId();
         Long seatId = orderDto.getSeatId();
 
-        Seat seat = seatRepository.findById(seatId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 좌석입니다."));
-        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+        Seat seat = findSeatWithEvent(seatId);
+        User user = findUserById(userId);
+
+        // 이벤트 ID 일치 여부 확인
+        if (!seat.getEvent().getId().equals(eventId)) {
+            throw new BusinessException.EventMismatchException(eventId, seat.getEvent().getId());
+        }
 
         // 쿠폰 할인 적용
         int ticketPrice = seat.getEvent().getTicketPrice();
-        int discountPrice = 0;
-        if (couponId != null) {
-            Double discountRate = couponRepository.findById(couponId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 쿠폰입니다."))
-                    .getDiscountRate();
-            discountPrice = (int) Math.floor(ticketPrice * discountRate / 100);
-        }
+        int discountPrice = applyCouponDiscount(couponId, ticketPrice);
         int totalPrice = ticketPrice - discountPrice;
 
-        //orderStatus: `PENDING` (결제 완료 전)
+        // 주문생성 orderStatus: `PENDING`
         Order order = Order.createOrder(totalPrice, OrderStatus.PENDING, couponId, eventId, user);
         orderRepository.save(order);
 
-        if (seat.getSeatStatus() != SeatStatus.AVAILABLE && seat.getSeatStatus() != SeatStatus.CANCELLED) {
-            throw new IllegalArgumentException("이미 선택중인 좌석");
-        }
+        // 좌석 상태 변경 LOCKED
+        validateSeatStatus(seat, SeatStatus.AVAILABLE, SeatStatus.CANCELLED);
         seat.update(order, SeatStatus.LOCKED);
-        seatRepository.save(seat);
 
         return OrderDto.Response.builder().seatId(seatId).build();
     }
 
-
-    // 티켓 결제 완료
+    /**
+     * 결제 완료
+     */
     @Transactional
-    public OrderDto.Response payed(Long orderId, OrderDto.Payment orderDto) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문"));
-
+    public OrderDto.Response payed(OrderDto.Payment orderDto) {
         Long seatId = orderDto.getSeatId();
 
-        // orderStatus: PENDING → CONFIRMED
-        if (order.getOrderStatus() != OrderStatus.PENDING) {
-            throw new IllegalArgumentException("결제할 수 없는 주문입니다.");
-        }
+        Seat seat = findSeatById(seatId);
+        Order order = findOrderBySeat(seat);
+
+        // 주문 상태 변경: PENDING → CONFIRMED
+        validateOrderStatus(order, OrderStatus.PENDING);
         order.update(OrderStatus.CONFIRMED);
-        orderRepository.save(order);
 
-        Seat seat = seatRepository.findById(seatId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 좌석입니다."));
-
-        // seatStatus: `Locked` → `RESERVED`
-        if (seat.getSeatStatus() != SeatStatus.LOCKED) {
-            throw new IllegalArgumentException("결제할 수 없는 좌석입니다");
-        }
+        // 좌석 상태 변경: LOCKED -> RESERVED
+        validateSeatStatus(seat, SeatStatus.LOCKED);
         seat.update(order, SeatStatus.RESERVED);
-        seatRepository.save(seat);
 
         return OrderDto.Response.builder().seatId(seatId).build();
     }
 
-
-    // 주문 취소
+    /**
+     * 주문 취소
+     */
     @Transactional
     public OrderDto.Response cancel(Long eventId, OrderDto.Cancel orderDto) {
         Long seatId = orderDto.getSeatId();
-        Long userId = orderDto.getUserId();
 
-        Seat seat = seatRepository.findById(seatId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 좌석"));
+        Seat seat = findSeatById(seatId);
+        Order order = findOrderBySeat(seat);
 
-        Order order = seat.getOrder();
-
-        //orderStatus: `CANCELLED`
-        order.update(OrderStatus.CANCELLED);
-        orderRepository.save(order);
-
-
-        if (seat.getSeatStatus() != SeatStatus.RESERVED && seat.getSeatStatus() != SeatStatus.LOCKED) {
-            throw new IllegalArgumentException("취소할 수 없는 좌석");
+        // 이벤트 ID 일치 여부 확인
+        if (!seat.getEvent().getId().equals(eventId)) {
+            throw new BusinessException.EventMismatchException(eventId, seat.getEvent().getId());
         }
+
+        // 주문 상태 변경: CANCELLED
+        validateOrderStatus(order, OrderStatus.CONFIRMED, OrderStatus.PENDING);
+        order.update(OrderStatus.CANCELLED);
+
+        // 좌석 상태 변경: RESERVED, LOCKED → CANCELLED
+        validateSeatStatus(seat, SeatStatus.RESERVED, SeatStatus.LOCKED);
         seat.update(order, SeatStatus.CANCELLED);
-        seatRepository.save(seat);
 
         return OrderDto.Response.builder().seatId(seatId).build();
+    }
+
+    /**
+     * 좌석 조회
+     */
+    public Seat findSeatById(Long seatId) {
+        return seatRepository.findById(seatId)
+                .orElseThrow(() -> new SeatNotFoundException(seatId));
+    }
+
+    /**
+     * 좌석 및 이벤트 조회
+     */
+    public Seat findSeatWithEvent(Long seatId) {
+        return seatRepository.findByIdWithEvent(seatId)
+                .orElseThrow(() -> new SeatNotFoundException(seatId));
+    }
+
+    /**
+     * 사용자 조회
+     */
+    public User findUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+    }
+
+    /**
+     * 좌석에 연결된 주문 조회
+     */
+    public Order findOrderBySeat(Seat seat) {
+        Order order = seat.getOrder();
+        if (order == null) {
+            throw new OrderNotFoundException(seat.getId());
+        }
+        return order;
+    }
+
+    /**
+     * 쿠폰 할인 적용 로직
+     */
+    public int applyCouponDiscount(Long couponId, int ticketPrice) {
+        if (couponId != null) {
+            Double discountRate = couponRepository.findById(couponId)
+                    .orElseThrow(() -> new CouponNotFoundException(couponId))
+                    .getDiscountRate();
+
+            return DiscountCalculator.calculateDiscount(ticketPrice, discountRate);
+        }
+        return 0;
+    }
+
+    // 좌석 상태 유효성 검증 메서드: 상태가 유효하지 않으면 예외를 던진다
+    private void validateSeatStatus(Seat seat, SeatStatus... validStatuses) {
+        if (Arrays.stream(validStatuses).noneMatch(status -> status == seat.getSeatStatus())) {
+            throw new InvalidSeatStatusException(seat.getSeatStatus());
+        }
+    }
+
+    // 주문 상태 유효성 검증 메서드: 상태가 유효하지 않으면 예외를 던진다
+    private void validateOrderStatus(Order order, OrderStatus... validStatuses) {
+        if (Arrays.stream(validStatuses).noneMatch(status -> status == order.getOrderStatus())) {
+            throw new InvalidOrderStatusException(order.getOrderStatus());
+        }
     }
 }

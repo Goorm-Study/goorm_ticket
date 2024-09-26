@@ -38,28 +38,28 @@ public class Order {
     private Long couponId;
 
     @Column(nullable = false)
-    private Long orderID;
+    private Long eventId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private Order(LocalDateTime reservationDate, int paymentAmount, OrderStatus orderStatus, Long couponId, Long orderID, User user) {
+    private Order(LocalDateTime reservationDate, int paymentAmount, OrderStatus orderStatus, Long couponId, Long eventId, User user) {
         this.reservationDate = reservationDate;
         this.paymentAmount = paymentAmount;
         this.orderStatus = orderStatus;
         this.couponId = couponId;
-        this.orderID = orderID;
+        this.eventId = eventId;
         this.user = user;
     }
 
-    public static Order createOrder(int paymentAmount, OrderStatus orderStatus, Long couponId, Long orderID, User user) {
+    public static Order createOrder(int paymentAmount, OrderStatus orderStatus, Long couponId, Long eventId, User user) {
         return Order.builder()
                 .paymentAmount(paymentAmount)
                 .orderStatus(orderStatus)
                 .couponId(couponId)
-                .orderID(orderID)
+                .eventId(eventId)
                 .user(user)
                 .build();
     }
