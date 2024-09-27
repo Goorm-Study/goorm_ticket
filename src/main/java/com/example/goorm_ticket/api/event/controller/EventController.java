@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @RestController
 public class EventController {
@@ -36,8 +35,7 @@ public class EventController {
     // 이벤트ID로 상세 정보 조회
     @GetMapping("/events/{eventId}")
     public ResponseEntity<EventResponseDto> getEventById(@PathVariable Long eventId) {
-        EventResponseDto event = eventService.getEventById(eventId)
-                .orElseThrow(() -> new NoSuchElementException("이벤트를 찾지 못했습니다. eventId: " + eventId));
+        EventResponseDto event = eventService.getEventById(eventId);
         return ResponseEntity.ok(event);
     }
 

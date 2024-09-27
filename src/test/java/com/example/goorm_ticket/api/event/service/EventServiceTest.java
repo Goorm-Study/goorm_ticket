@@ -59,16 +59,14 @@ public class EventServiceTest {
     @Test
     @DisplayName("특정 ID로 공연 상세정보를 성공적으로 조회한다.")
     void getEventById_Success() {
-        //given
+        // given
         Event event = createEvent("Test Event");
         eventRepository.save(event);
 
         // when
-        Optional<EventResponseDto> optionalResponseDto = eventService.getEventById(event.getId());
+        EventResponseDto responseDto = eventService.getEventById(event.getId());
 
         // then
-        assertTrue(optionalResponseDto.isPresent());
-        EventResponseDto responseDto = optionalResponseDto.get(); // Optional에서 값 추출
         assertNotNull(responseDto);
         assertEquals(event.getTitle(), responseDto.getTitle());
         assertEquals(event.getTicketOpenTime(), responseDto.getTicketOpenTime());
@@ -80,12 +78,12 @@ public class EventServiceTest {
         // given
         Long nonExistentId = 999L;
 
-        // when
-        Optional<EventResponseDto> result = eventService.getEventById(nonExistentId);
+        // when & then
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> {
+            eventService.getEventById(nonExistentId);
+        });
 
-        // then
-        assertTrue(result.isEmpty(), "이벤트가 존재하지 않아야 합니다.");
-
+        assertEquals("이벤트를 찾지 못했습니다. eventId: " + nonExistentId, exception.getMessage());
     }
 
     @Test

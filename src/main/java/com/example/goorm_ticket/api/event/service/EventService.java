@@ -38,9 +38,11 @@ public class EventService {
         return new PageImpl<>(dtoList, eventsPage.getPageable(), eventsPage.getTotalElements());
     }
 
-    public Optional<EventResponseDto> getEventById(Long eventId) {
+    @Transactional(readOnly = true)
+    public EventResponseDto getEventById(Long eventId) {
         return eventRepository.findById(eventId)
-                .map(this::mapToEventResponseDto);
+                .map(this::mapToEventResponseDto)
+                .orElseThrow(() -> new NoSuchElementException("이벤트를 찾지 못했습니다. eventId: " + eventId));
     }
 
     @Transactional(readOnly = true)

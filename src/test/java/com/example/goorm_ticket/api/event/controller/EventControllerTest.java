@@ -73,7 +73,7 @@ class EventControllerTest {
                 .build();
 
         // when
-        when(eventService.getEventById(1L)).thenReturn(Optional.of(eventResponseDto));
+        when(eventService.getEventById(1L)).thenReturn(eventResponseDto);
 
         // then
         mockMvc.perform(get("/events/1")
