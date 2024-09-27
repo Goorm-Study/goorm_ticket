@@ -7,22 +7,23 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/orders")
 public class OrderController {
 
     private final OrderService orderService;
 
-    @PostMapping("/orders/{eventId}")
+    @PostMapping("/{eventId}")
     public OrderDto.Response order(@PathVariable Long eventId, @RequestBody OrderDto.Create orderDto) {
         return orderService.order(eventId, orderDto);
     }
 
-    @PostMapping("/orders/payment")
+    @PostMapping("/payment")
     public OrderDto.Response paymentCompleted(@RequestBody OrderDto.Payment orderDto) {
         return orderService.payed(orderDto);
     }
 
 
-    @PostMapping("/orders/cancel/{eventId}")
+    @PostMapping("/cancel/{eventId}")
     public OrderDto.Response cancel(@PathVariable Long eventId, @RequestBody OrderDto.Cancel orderDto) {
         return orderService.cancel(eventId, orderDto);
     }
