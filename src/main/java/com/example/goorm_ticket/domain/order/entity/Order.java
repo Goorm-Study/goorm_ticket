@@ -54,7 +54,7 @@ public class Order {
         this.user = user;
     }
 
-    public static Order createOrder(int paymentAmount, OrderStatus orderStatus, Long couponId, Long eventId, User user) {
+    public static Order of(int paymentAmount, OrderStatus orderStatus, Long couponId, Long eventId, User user) {
         return Order.builder()
                 .paymentAmount(paymentAmount)
                 .orderStatus(orderStatus)

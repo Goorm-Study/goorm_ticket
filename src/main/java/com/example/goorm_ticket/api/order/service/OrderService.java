@@ -2,13 +2,16 @@ package com.example.goorm_ticket.api.order.service;
 
 import com.example.goorm_ticket.api.order.exception.BusinessException;
 import com.example.goorm_ticket.api.order.utils.DiscountCalculator;
+import com.example.goorm_ticket.domain.order.dto.OrderCancelDto;
+import com.example.goorm_ticket.domain.order.dto.OrderCreateDto;
+import com.example.goorm_ticket.domain.order.dto.OrderPaymentDto;
+import com.example.goorm_ticket.domain.order.dto.OrderResponseDto;
 import com.example.goorm_ticket.domain.order.repository.CouponRepository;
 import com.example.goorm_ticket.domain.order.repository.OrderRepository;
 import com.example.goorm_ticket.domain.order.repository.SeatRepository;
 import com.example.goorm_ticket.domain.order.repository.UserRepository;
 import com.example.goorm_ticket.domain.event.entity.Seat;
 import com.example.goorm_ticket.domain.event.entity.SeatStatus;
-import com.example.goorm_ticket.domain.order.dto.OrderDto;
 import com.example.goorm_ticket.domain.order.entity.Order;
 import com.example.goorm_ticket.domain.order.entity.OrderStatus;
 import com.example.goorm_ticket.domain.user.entity.User;
@@ -34,7 +37,7 @@ public class OrderService {
      * 주문 생성
      */
     @Transactional
-    public OrderDto.Response order(Long eventId, OrderDto.Create orderDto) {
+    public OrderResponseDto order(Long eventId, OrderCreateDto orderDto) {
         Long couponId = orderDto.getCouponId();
         Long userId = orderDto.getUserId();
         Long seatId = orderDto.getSeatId();
@@ -53,21 +56,21 @@ public class OrderService {
         int totalPrice = ticketPrice - discountPrice;
 
         // 주문생성 orderStatus: `PENDING`
-        Order order = Order.createOrder(totalPrice, OrderStatus.PENDING, couponId, eventId, user);
+        Order order = Order.of(totalPrice, OrderStatus.PENDING, couponId, eventId, user);
         orderRepository.save(order);
 
         // 좌석 상태 변경 LOCKED
         validateSeatStatus(seat, SeatStatus.AVAILABLE, SeatStatus.CANCELLED);
         seat.update(order, SeatStatus.LOCKED);
 
-        return OrderDto.Response.builder().seatId(seatId).build();
+        return OrderResponseDto.builder().seatId(seatId).build();
     }
 
     /**
      * 결제 완료
      */
     @Transactional
-    public OrderDto.Response payed(OrderDto.Payment orderDto) {
+    public OrderResponseDto payed(OrderPaymentDto orderDto) {
         Long seatId = orderDto.getSeatId();
 
         Seat seat = findSeatById(seatId);
@@ -81,14 +84,14 @@ public class OrderService {
         validateSeatStatus(seat, SeatStatus.LOCKED);
         seat.update(order, SeatStatus.RESERVED);
 
-        return OrderDto.Response.builder().seatId(seatId).build();
+        return OrderResponseDto.builder().seatId(seatId).build();
     }
 
     /**
      * 주문 취소
      */
     @Transactional
-    public OrderDto.Response cancel(Long eventId, OrderDto.Cancel orderDto) {
+    public OrderResponseDto cancel(Long eventId, OrderCancelDto orderDto) {
         Long seatId = orderDto.getSeatId();
 
         Seat seat = findSeatById(seatId);
@@ -107,7 +110,7 @@ public class OrderService {
         validateSeatStatus(seat, SeatStatus.RESERVED, SeatStatus.LOCKED);
         seat.update(order, SeatStatus.CANCELLED);
 
-        return OrderDto.Response.builder().seatId(seatId).build();
+        return OrderResponseDto.builder().seatId(seatId).build();
     }
 
     /**

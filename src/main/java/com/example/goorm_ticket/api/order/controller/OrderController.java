@@ -1,7 +1,10 @@
 package com.example.goorm_ticket.api.order.controller;
 
 import com.example.goorm_ticket.api.order.service.OrderService;
-import com.example.goorm_ticket.domain.order.dto.OrderDto;
+import com.example.goorm_ticket.domain.order.dto.OrderCancelDto;
+import com.example.goorm_ticket.domain.order.dto.OrderCreateDto;
+import com.example.goorm_ticket.domain.order.dto.OrderPaymentDto;
+import com.example.goorm_ticket.domain.order.dto.OrderResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,18 +16,17 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping("/{eventId}")
-    public OrderDto.Response order(@PathVariable Long eventId, @RequestBody OrderDto.Create orderDto) {
+    public OrderResponseDto order(@PathVariable Long eventId, @RequestBody OrderCreateDto orderDto) {
         return orderService.order(eventId, orderDto);
     }
 
     @PostMapping("/payment")
-    public OrderDto.Response paymentCompleted(@RequestBody OrderDto.Payment orderDto) {
+    public OrderResponseDto paymentCompleted(@RequestBody OrderPaymentDto orderDto) {
         return orderService.payed(orderDto);
     }
 
-
     @PostMapping("/cancel/{eventId}")
-    public OrderDto.Response cancel(@PathVariable Long eventId, @RequestBody OrderDto.Cancel orderDto) {
+    public OrderResponseDto cancel(@PathVariable Long eventId, @RequestBody OrderCancelDto orderDto) {
         return orderService.cancel(eventId, orderDto);
     }
 }
