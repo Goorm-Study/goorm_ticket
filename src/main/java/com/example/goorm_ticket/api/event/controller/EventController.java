@@ -3,6 +3,7 @@ package com.example.goorm_ticket.api.event.controller;
 import com.example.goorm_ticket.api.event.service.EventService;
 import com.example.goorm_ticket.domain.event.dto.EventResponseDto;
 import com.example.goorm_ticket.domain.event.dto.SeatResponseDto;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -14,14 +15,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 public class EventController {
 
     private final EventService eventService;
-
-    @Autowired
-    public EventController(EventService eventService) {
-        this.eventService = eventService;
-    }
 
     // 전체 페이지 이벤트 조회 API
     @GetMapping("/events")
