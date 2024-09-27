@@ -55,7 +55,7 @@ class EventControllerTest {
                 .thenReturn(new PageImpl<>(Collections.singletonList(eventResponseDto)));
 
         // then
-        mockMvc.perform(get("/events")
+        mockMvc.perform(get("/api/v1/events")
                         .param("page", "0")
                         .param("size", "10")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -76,7 +76,7 @@ class EventControllerTest {
         when(eventService.getEventById(1L)).thenReturn(eventResponseDto);
 
         // then
-        mockMvc.perform(get("/events/1")
+        mockMvc.perform(get("/api/v1/events/1")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Test Event"));
@@ -94,7 +94,7 @@ class EventControllerTest {
         Mockito.when(eventService.getSeatsByEventId(anyLong())).thenReturn(seatList);
 
         // then
-        mockMvc.perform(get("/events/1/seats")
+        mockMvc.perform(get("/api/v1/events/1/seats")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
