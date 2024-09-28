@@ -7,7 +7,6 @@ import com.example.goorm_ticket.domain.event.entity.Seat;
 import com.example.goorm_ticket.domain.event.repository.EventRepository;
 import com.example.goorm_ticket.domain.event.repository.SeatRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -16,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,8 +29,7 @@ public class EventService {
     public Page<EventResponseDto> getAllEvents(int page, int size) {
         Page<Event> eventsPage = eventRepository.findAll(PageRequest.of(page, size));
         List<EventResponseDto> dtoList = eventsPage.stream()
-                .map(event -> mapToEventResponseDto(event)
-                )
+                .map(EventResponseDto::mapToEventResponseDto)
                 .collect(Collectors.toList());
 
         return new PageImpl<>(dtoList, eventsPage.getPageable(), eventsPage.getTotalElements());
@@ -41,7 +38,7 @@ public class EventService {
     @Transactional(readOnly = true)
     public EventResponseDto getEventById(Long eventId) {
         return eventRepository.findById(eventId)
-                .map(this::mapToEventResponseDto)
+                .map(EventResponseDto::mapToEventResponseDto)
                 .orElseThrow(() -> new NoSuchElementException("이벤트를 찾지 못했습니다. eventId: " + eventId));
     }
 
@@ -61,13 +58,6 @@ public class EventService {
                         .seatStatus(seat.getSeatStatus())
                         .build())
                 .collect(Collectors.toList());
-    }
-
-    private EventResponseDto mapToEventResponseDto(Event event) {
-        return EventResponseDto.builder()
-                .title(event.getTitle())
-                .ticketOpenTime(event.getTicketOpenTime())
-                .build();
     }
 
 }
