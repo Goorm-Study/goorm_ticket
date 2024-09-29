@@ -1,9 +1,8 @@
 package com.example.goorm_ticket.domain.coupon.entity;
 
+import com.example.goorm_ticket.domain.coupon.dto.CouponResponseDto;
 import jakarta.persistence.Embeddable;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Objects;
 
@@ -14,10 +13,17 @@ public class CouponEmbeddable {
     private Long id;
     private String name;
 
-    @Builder
-    public CouponEmbeddable(Long id, String name) {
+    @Builder(access = AccessLevel.PRIVATE)
+    private CouponEmbeddable(Long id, String name) {
         this.id = id;
         this.name = name;
+    }
+
+    public static CouponEmbeddable of(Long id, String name) {
+        return CouponEmbeddable.builder()
+                .id(id)
+                .name(name)
+                .build();
     }
 
     @Override

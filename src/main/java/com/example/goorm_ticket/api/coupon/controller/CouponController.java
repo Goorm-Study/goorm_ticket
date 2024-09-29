@@ -1,8 +1,8 @@
 package com.example.goorm_ticket.api.coupon.controller;
 
 import com.example.goorm_ticket.api.coupon.service.CouponService;
-import com.example.goorm_ticket.api.coupon.service.UserCouponService;
-import com.example.goorm_ticket.domain.coupon.dto.CouponResponse;
+import com.example.goorm_ticket.domain.coupon.dto.CouponRequestDto;
+import com.example.goorm_ticket.domain.coupon.dto.CouponResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,28 +10,25 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/coupon")
+@RequestMapping("/api/v1/coupons")
 public class CouponController {
 
     private final CouponService couponService;
-    private final UserCouponService userCouponService;
-
 
     @GetMapping
-    public List<CouponResponse> getAllCoupons() {
+    public List<CouponResponseDto> getAllCoupons() {
         return couponService.getAllCoupons();
     }
 
-    @PostMapping("/{user_id}/{coupon_id}")
-    public CouponResponse allocateCouponToUser(@PathVariable(name="user_id") Long user_id,
-                                        @PathVariable(name="coupon_id") Long coupon_id) {
-        return userCouponService.allocateCouponToUser(user_id, coupon_id);
+    @PostMapping("/allocate")
+    public CouponResponseDto allocateCouponToUser(@RequestBody CouponRequestDto couponRequestDto) {
+        return couponService.allocateCouponToUser(couponRequestDto);
     }
 
-    // 이름말고 CouponResponse 반환하도록 하는게 나을듯
-    @GetMapping("/{id}")
-    public List<CouponResponse> getUserCoupons(@PathVariable Long user_id) {
-        return couponService.getUserCoupons(user_id);
+    /*유저의 쿠폰을 조회하는 api는 UserController로 옮기는게 낫지 않을까*/
+    @GetMapping("/{userId}/coupons")
+    public List<CouponResponseDto> getUserCoupons(@PathVariable Long userId) {
+        return couponService.getUserCoupons(userId);
     }
 
 }

@@ -1,5 +1,6 @@
 package com.example.goorm_ticket.domain.coupon.entity;
 
+import com.example.goorm_ticket.api.coupon.exception.CouponException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -7,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+
+import static com.example.goorm_ticket.api.coupon.exception.CouponException.*;
 
 @Entity
 @NoArgsConstructor
@@ -28,7 +31,7 @@ public class Coupon {
     @Column(nullable = false)
     private LocalDateTime expirationDate;
 
-    @Builder
+    @Builder(access = AccessLevel.PRIVATE)
     private Coupon(Long quantity, String name, Double discountRate, LocalDateTime expirationDate) {
         this.quantity = quantity;
         this.name = name;
@@ -36,9 +39,18 @@ public class Coupon {
         this.expirationDate = expirationDate;
     }
 
+    public static Coupon of(Long quantity, String name, Double discountRate, LocalDateTime expirationDate) {
+        return Coupon.builder()
+                .quantity(quantity)
+                .name(name)
+                .discountRate(discountRate)
+                .expirationDate(expirationDate)
+                .build();
+    }
+
     public void decreaseQuantity(Long quantity) {
         if(this.quantity < quantity) {
-            throw new IllegalArgumentException("남은 쿠폰이 요청한 개수보다 적습니다.");
+            throw new CouponQuantityShortageException(this.quantity, quantity);
         }
         this.quantity -= quantity;
     }
