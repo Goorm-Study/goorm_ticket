@@ -14,22 +14,19 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
+import java.util.*;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import org.mockito.Mockito;
 
 import org.springframework.test.web.servlet.ResultActions;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
 
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(EventController.class)
 //컨트롤러 통합테스트
@@ -83,6 +80,36 @@ class EventControllerTest {
     }
 
     @Test
+    void getEventById_NotFound() throws Exception {
+        // given
+        Long nonExistentEventId = 999L;
+        when(eventService.getEventById(nonExistentEventId))
+                .thenThrow(new NoSuchElementException(String.valueOf(nonExistentEventId)));
+
+        // when & then
+        mockMvc.perform(get("/api/v1/events/" + nonExistentEventId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("이벤트를 찾지 못했습니다. eventId: 999"));
+    }
+
+    @Test
+    void getEventById_BadRequest() throws Exception {
+        // given
+        Long invalidEventId = -1L; // 유효하지 않은 ID 예시
+        when(eventService.getEventById(invalidEventId))
+                .thenThrow(new IllegalArgumentException("유효하지 않은 이벤트 ID입니다."));
+
+        // when & then
+        mockMvc.perform(get("/api/v1/events/" + invalidEventId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("잘못된 요청: 유효하지 않은 이벤트 ID입니다.")); // 예상 메시지 검증
+    }
+
+    @Test
     @DisplayName("특정 이벤트의 좌석 조회 API 테스트")
     void getSeatsByEventId() throws Exception {
         // given
@@ -104,4 +131,5 @@ class EventControllerTest {
                 .andExpect(jsonPath("$[1].seatStatus", is(SeatStatus.RESERVED.toString())))
                 .andDo(print());
     }
+
 }

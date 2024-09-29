@@ -46,7 +46,7 @@ public class EventService {
     public List<SeatResponseDto> getSeatsByEventId(Long eventId) {
         // 해당 이벤트가 존재하는지 확인
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new IllegalArgumentException("이벤트를 찾지 못했습니다. eventId: " + eventId));
+                .orElseThrow(() -> new NoSuchElementException("이벤트를 찾지 못했습니다. eventId: " + eventId));
 
         // 해당 이벤트의 모든 좌석 조회
         List<Seat> seats = seatRepository.findByEvent(event);
