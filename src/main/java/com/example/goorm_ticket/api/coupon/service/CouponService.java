@@ -59,10 +59,7 @@ public class CouponService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public CouponResponseDto allocateCouponToUser(CouponRequestDto couponRequestDto) {
-        Long userId = couponRequestDto.getUserId();
-        Long couponId = couponRequestDto.getCouponId();
-
+    public CouponResponseDto allocateCouponToUser(Long userId, Long couponId) {
         User user = findUserById(userId);
 
         boolean success = decreaseCoupon(couponId);

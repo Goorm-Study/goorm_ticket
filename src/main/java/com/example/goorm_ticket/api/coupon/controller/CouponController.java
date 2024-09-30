@@ -20,9 +20,9 @@ public class CouponController {
         return couponService.getAllCoupons();
     }
 
-    @PostMapping("/allocate")
-    public CouponResponseDto allocateCouponToUser(@RequestBody CouponRequestDto couponRequestDto) {
-        return couponService.allocateCouponToUser(couponRequestDto);
+    @PostMapping("/{userId}/{couponId}")
+    public CouponResponseDto allocateCouponToUser(@PathVariable Long userId, @PathVariable Long couponId) {
+        return couponService.allocateCouponToUser(userId, couponId);
     }
 
     /*유저의 쿠폰을 조회하는 api는 UserController로 옮기는게 낫지 않을까*/
