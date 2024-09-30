@@ -1,6 +1,7 @@
 package com.example.goorm_ticket.domain.event.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -37,7 +38,7 @@ public class Event {
     @Column(nullable = false)
     private LocalDateTime ticketOpenTime;
 
-    @Builder
+    @Builder(access = AccessLevel.PRIVATE)
     private Event(String artist, String title, String description, String duration, String venue, int ticketPrice, LocalDateTime ticketOpenTime) {
         this.artist = artist;
         this.title = title;

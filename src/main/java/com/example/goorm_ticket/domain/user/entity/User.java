@@ -18,7 +18,7 @@ import java.util.Map;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, unique = true)
@@ -39,5 +39,12 @@ public class User {
     private User(String username, String password) {
         this.username = username;
         this.password = password;
+    }
+
+    public static User of(String username, String password) {
+        return User.builder()
+                .username(username)
+                .password(password)
+                .build();
     }
 }
