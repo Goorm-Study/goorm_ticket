@@ -35,9 +35,16 @@ public class User {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<Order> order = new ArrayList<>();
 
-    @Builder(access = AccessLevel.PRIVATE)
+    @Builder
     private User(String username, String password) {
         this.username = username;
         this.password = password;
+    }
+
+    public static User of(String username, String password) {
+        return User.builder()
+                .username(username)
+                .password(password)
+                .build();
     }
 }
