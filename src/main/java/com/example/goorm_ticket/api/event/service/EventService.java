@@ -19,13 +19,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class EventService {
 
     private final EventRepository eventRepository;
     private final SeatRepository seatRepository;
 
 
-    // 페이징된 이벤트 리스트 조회, DTO 변환
     public Page<EventResponseDto> getAllEvents(int page, int size) {
         Page<Event> eventsPage = eventRepository.findAll(PageRequest.of(page, size));
         List<EventResponseDto> dtoList = eventsPage.stream()
@@ -35,14 +35,12 @@ public class EventService {
         return new PageImpl<>(dtoList, eventsPage.getPageable(), eventsPage.getTotalElements());
     }
 
-    @Transactional(readOnly = true)
     public EventResponseDto getEventById(Long eventId) {
         return eventRepository.findById(eventId)
                 .map(EventResponseDto::mapToEventResponseDto)
                 .orElseThrow(() -> new NoSuchElementException("이벤트를 찾지 못했습니다. eventId: " + eventId));
     }
 
-    @Transactional(readOnly = true)
     public List<SeatResponseDto> getSeatsByEventId(Long eventId) {
         // 해당 이벤트가 존재하는지 확인
         Event event = eventRepository.findById(eventId)
