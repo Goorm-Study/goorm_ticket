@@ -58,7 +58,7 @@ public class CouponService {
         return true;
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW) // 락 획득/해제 관련 로직과 비즈니스 로직의 트랜잭션을 분리하기 위해
     public CouponResponseDto allocateCouponToUser(Long userId, Long couponId) {
         User user = findUserById(userId);
 

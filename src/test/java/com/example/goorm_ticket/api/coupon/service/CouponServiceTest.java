@@ -8,12 +8,17 @@ import com.example.goorm_ticket.domain.coupon.repository.CouponRepository;
 import com.example.goorm_ticket.domain.user.entity.User;
 import com.example.goorm_ticket.domain.user.repository.UserRepository;
 import org.assertj.core.api.Assertions;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,45 +38,6 @@ class CouponServiceTest {
     @Autowired
     private UserRepository userRepository;
 
-    private Long userId;
-    private Long coupon1Id;
-    private Long coupon2Id;
-
-    @BeforeEach
-    void before() {
-        Coupon coupon1 = Coupon.of(100L,
-                        "coupon1",
-                        0.15,
-                        LocalDateTime.of(2024, 12, 30, 0, 0)
-                        );
-
-        Coupon coupon2 = Coupon.of(15L,
-                "coupon2",
-                0.20,
-                LocalDateTime.of(2024, 12, 30, 0, 0)
-        );
-
-        couponRepository.saveAndFlush(coupon1);
-        couponRepository.saveAndFlush(coupon2);
-
-        coupon1Id = coupon1.getId();
-        coupon2Id = coupon2.getId();
-
-        User user = User.builder()
-                .username("tester")
-                .password("1234")
-                .build();
-
-        userRepository.saveAndFlush(user);
-        userId = user.getId();
-
-        List<CouponEmbeddable> coupons = user.getCoupons();
-        coupons.add(CouponEmbeddable.of(coupon1Id, coupon1.getName()));
-        coupons.add(CouponEmbeddable.of(coupon2Id, coupon2.getName()));
-
-        userRepository.saveAndFlush(user);
-    }
-
     @AfterEach
     public void after() {
         couponRepository.deleteAllInBatch();
@@ -79,56 +45,171 @@ class CouponServiceTest {
     }
 
     @Test
-    void 쿠폰_전체_조회() {
+    @DisplayName("쿠폰 2개를 넣은 후 전체 쿠폰 목록을 조회한다.")
+    void getAllCoupons() {
+        User user = User.builder()
+                .username("tester")
+                .password("1234")
+                .build();
+
+        userRepository.save(user);
+
+        Coupon coupon1 = Coupon.of(100L,
+                "coupon1",
+                0.15,
+                LocalDateTime.of(2024, 12, 30, 0, 0)
+        );
+
+        Coupon coupon2 = Coupon.of(15L,
+                "coupon2",
+                0.20,
+                LocalDateTime.of(2024, 12, 30, 0, 0)
+        );
+
+        couponRepository.saveAll(List.of(coupon1, coupon2));
+
+        // when
         List<CouponResponseDto> couponList = couponService.getAllCoupons();
-        assertEquals(2, couponList.size());
+
+        // then
+        assertThat(couponList).hasSize(2);
+        assertThat(couponList.get(0).getId()).isEqualTo(coupon1.getId());
+        assertThat(couponList.get(1).getId()).isEqualTo(coupon2.getId());
     }
 
     @Test
-    @Transactional
-    void 유저_쿠폰_조회() {
+    @Transactional // 지연 로딩이므로 영속성 컨텍스트가 초기화를 시켜줘야 하므로 트랜잭션 처리
+    @DisplayName("유저 쿠폰 목록에 쿠폰을 2개 넣은 후 유저 쿠폰 목록을 조회한다.")
+    void getUserCoupons() {
         // given
-        List<CouponResponseDto> userCoupons = couponService.getUserCoupons(userId);
+        User user = User.builder()
+                .username("tester")
+                .password("1234")
+                .build();
 
+        userRepository.save(user);
+
+        Coupon coupon1 = Coupon.of(100L,
+                "coupon1",
+                0.15,
+                LocalDateTime.of(2024, 12, 30, 0, 0)
+        );
+
+        Coupon coupon2 = Coupon.of(15L,
+                "coupon2",
+                0.20,
+                LocalDateTime.of(2024, 12, 30, 0, 0)
+        );
+
+        couponRepository.saveAll(List.of(coupon1, coupon2));
+
+        List<CouponEmbeddable> coupons = user.getCoupons();
+        coupons.add(CouponEmbeddable.of(coupon1.getId(), coupon1.getName()));
+        coupons.add(CouponEmbeddable.of(coupon2.getId(), coupon2.getName()));
+
+        userRepository.save(user);
+
+        // when
+        List<CouponResponseDto> userCoupons = couponService.getUserCoupons(user.getId());
+
+        // then
         assertThat(userCoupons).hasSize(2);
+        assertThat(userCoupons.get(0).getId()).isEqualTo(coupon1.getId());
+        assertThat(userCoupons.get(1).getId()).isEqualTo(coupon2.getId());
     }
 
     @Test
-    void 쿠폰_할당_실패() {
+    @Transactional // 지연 로딩이므로 영속성 컨텍스트가 초기화를 시켜줘야 하므로 트랜잭션 처리
+    @DisplayName("존재하지 않는 유저의 경우 유저의 쿠폰 목록을 확인할 수 없다.")
+    void getUserCoupons_userNotFound() {
         // given
-        Coupon coupon3 = Coupon.of(0L, "coupon3", 0.10, LocalDateTime.of(2024, 12, 30, 0, 0));
-        couponRepository.saveAndFlush(coupon3);
+        User user = User.builder()
+                .username("tester")
+                .password("1234")
+                .build();
+
+        userRepository.save(user);
+
+        Coupon coupon1 = Coupon.of(100L,
+                "coupon1",
+                0.15,
+                LocalDateTime.of(2024, 12, 30, 0, 0)
+        );
+
+        Coupon coupon2 = Coupon.of(15L,
+                "coupon2",
+                0.20,
+                LocalDateTime.of(2024, 12, 30, 0, 0)
+        );
+
+        couponRepository.saveAll(List.of(coupon1, coupon2));
+        List<CouponEmbeddable> coupons = user.getCoupons();
+        coupons.add(CouponEmbeddable.of(coupon1.getId(), coupon1.getName()));
+        coupons.add(CouponEmbeddable.of(coupon2.getId(), coupon2.getName()));
+
+        userRepository.save(user);
 
         // when, then
-        Long coupon3Id = coupon3.getId();
-        assertThatThrownBy(() -> couponService.decreaseCoupon(coupon3Id))
-                .isInstanceOf(CouponException.CouponQuantityShortageException.class)
+        assertThatThrownBy(() -> couponService.getUserCoupons(user.getId()+1))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessageContaining("존재하지 않는 회원입니다.");
+
+    }
+
+    @Test
+    @DisplayName("시스템에 남은 쿠폰의 개수가 0일 경우 유저는 쿠폰을 할당받을 수 없다.")
+    void allocateCoupon_quantityShortage() {
+        // given
+        Coupon coupon = Coupon.of(0L, "coupon3", 0.10, LocalDateTime.of(2024, 12, 30, 0, 0));
+        couponRepository.save(coupon);
+
+        // when, then
+        assertThatThrownBy(() -> couponService.decreaseCoupon(coupon.getId()))
+                .isInstanceOf(CouponQuantityShortageException.class)
                 .hasMessageContaining("남은 쿠폰의 개수가 요청한 개수보다 적습니다.");
     }
 
     @Test
-    void 유저_쿠폰_할당() {
+    @DisplayName("쿠폰을 유저에게 할당하기 위해 개수를 줄인다.")
+    void decreaseCoupon() {
         // given
-        Coupon coupon3 = Coupon.of(10L, "coupon3", 0.10, LocalDateTime.of(2024, 12, 30, 0, 0));
-        couponRepository.saveAndFlush(coupon3);
+        Coupon coupon = Coupon.of(10L, "coupon3", 0.10, LocalDateTime.of(2024, 12, 30, 0, 0));
+        couponRepository.save(coupon);
 
         // when
-        Long coupon3Id = coupon3.getId();
-        couponService.decreaseCoupon(coupon3Id);
+        couponService.decreaseCoupon(coupon.getId());
+        Coupon foundCoupon = couponRepository.findById(coupon.getId()).orElseThrow();
 
         // then
-        Coupon coupon = couponRepository.findById(coupon3Id).orElseThrow();
-        assertEquals(9L, coupon.getQuantity());
-
-        // 커밋을 해줘야 db에 쿠폰이 들어가므로 이 방법으론 테스트 안됨
-//        CouponResponse couponResponse = userCouponService.allocateCouponToUser(user_id, coupon3Id);
-//        assertEquals(coupon3Id, couponResponse.getId());
-//        Coupon coupon = couponRepository.findById(coupon3Id).orElseThrow();
-//        assertEquals(9L, coupon.getQuantity());
-//        User user = userRepository.findById(user_id).orElseThrow();
-//        assertEquals(3, user.getCoupons().size());
+        assertEquals(9L, foundCoupon.getQuantity());
     }
 }
+
+//    @Test
+//    @DisplayName("쿠폰을 유저에게 할당하면 유저 쿠폰 목록에 쿠폰이 추가된다.")
+//    void allocateCouponToUser() {
+//        // given
+//        Coupon coupon = Coupon.of(100L,
+//                "coupon1",
+//                0.15,
+//                LocalDateTime.of(2024, 12, 30, 0, 0)
+//        );
+//
+//        couponRepository.save(coupon);
+//
+//        User user = User.builder()
+//                .username("tester")
+//                .password("1234")
+//                .build();
+//
+//        userRepository.save(user);
+//
+//        CouponResponseDto couponResponseDto = couponService.allocateCouponToUser(user.getId(), coupon.getId());
+//        assertThat(couponResponseDto.getId()).isEqualTo(coupon.getId());
+//        assertThat(user.getCoupons().get(0).getId()).isEqualTo(coupon.getId());
+//        assertThat(coupon.getQuantity()).isEqualTo(99L);
+//    }
+//}
 
 
 //    @Test // 아직 동시성 처리 안해서 테스트 실패함

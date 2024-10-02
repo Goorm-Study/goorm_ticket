@@ -36,4 +36,5 @@ out/
 ### VS Code ###
 .vscode/
 
-*.yml
+# application.yml 파일 무시
+src/main/resources/application.yml
