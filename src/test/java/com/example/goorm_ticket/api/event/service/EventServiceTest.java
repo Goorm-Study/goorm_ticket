@@ -123,14 +123,7 @@ public class EventServiceTest {
 
 
     private Event createEvent(String title) {
-        return Event.builder()
-                .title(title)
-                .artist("artist")
-                .description("description")
-                .duration("9/28~9/30")
-                .venue("venue")
-                .ticketPrice(10000)
-                .ticketOpenTime(LocalDateTime.now())
-                .build();
+        return Event.of(title, "artist", "description", "9/28~9/30", "venue", 10000, LocalDateTime.now());
     }
+
 }

@@ -22,6 +22,9 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static com.example.goorm_ticket.api.coupon.exception.CouponException.*;
 import static org.assertj.core.api.Assertions.*;
@@ -183,7 +186,6 @@ class CouponServiceTest {
         // then
         assertEquals(9L, foundCoupon.getQuantity());
     }
-}
 
 //    @Test
 //    @DisplayName("쿠폰을 유저에게 할당하면 유저 쿠폰 목록에 쿠폰이 추가된다.")
@@ -204,7 +206,10 @@ class CouponServiceTest {
 //
 //        userRepository.save(user);
 //
+//        // when
 //        CouponResponseDto couponResponseDto = couponService.allocateCouponToUser(user.getId(), coupon.getId());
+//
+//        // then
 //        assertThat(couponResponseDto.getId()).isEqualTo(coupon.getId());
 //        assertThat(user.getCoupons().get(0).getId()).isEqualTo(coupon.getId());
 //        assertThat(coupon.getQuantity()).isEqualTo(99L);
@@ -212,26 +217,43 @@ class CouponServiceTest {
 //}
 
 
-//    @Test // 아직 동시성 처리 안해서 테스트 실패함
-//    @Transactional
-//    void 동시에_쿠폰_100개_할당() throws InterruptedException {
-//        int threadCount = 100;
-//        ExecutorService executorService = Executors.newFixedThreadPool(32);
-//        CountDownLatch latch = new CountDownLatch(threadCount);
-//
-//        for(int i = 0; i < threadCount; i++) {
-//            executorService.submit(() -> {
-//                try {
-//                    userCouponService.allocateCouponToUser(user_id, 1L);
-//                } finally {
-//                    latch.countDown();
-//                }
-//            });
-//        }
-//
-//        latch.await();
-//
-//        Coupon coupon = couponRepository.findById(1L).orElseThrow();
-//        assertEquals(0, coupon.getQuantity());
-//    }
-//}
+    @Test // 아직 동시성 처리 안해서 테스트 실패함
+    @DisplayName("100개의 스레드에서 동시에 쿠폰을 요청한다.")
+    void allocateCouponTo100Thread() throws InterruptedException {
+        // given
+        Coupon coupon = Coupon.of(100L,
+                "coupon1",
+                0.15,
+                LocalDateTime.of(2024, 12, 30, 0, 0)
+        );
+
+        couponRepository.save(coupon);
+
+        User user = User.builder()
+                .username("tester")
+                .password("1234")
+                .build();
+
+        userRepository.save(user);
+
+        // when
+        int threadCount = 100;
+        ExecutorService executorService = Executors.newFixedThreadPool(32);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        for(int i = 0; i < threadCount; i++) {
+            executorService.submit(() -> {
+                try {
+                    couponService.allocateCouponToUser(user.getId(), coupon.getId());
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+
+        Coupon foundCoupon = couponRepository.findById(coupon.getId()).orElseThrow();
+        assertEquals(0, foundCoupon.getQuantity());
+    }
+}

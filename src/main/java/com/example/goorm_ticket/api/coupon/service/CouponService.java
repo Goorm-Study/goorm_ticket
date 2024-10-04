@@ -1,5 +1,6 @@
 package com.example.goorm_ticket.api.coupon.service;
 
+import com.example.goorm_ticket.aop.annotation.DistributedLock;
 import com.example.goorm_ticket.api.coupon.exception.CouponException;
 import com.example.goorm_ticket.domain.coupon.dto.CouponRequestDto;
 import com.example.goorm_ticket.domain.coupon.dto.CouponResponseDto;
@@ -49,30 +50,26 @@ public class CouponService {
                 .collect(Collectors.toList());
     }
 
-    public boolean decreaseCoupon(Long couponId) {
+    public CouponResponseDto decreaseCoupon(Long couponId) {
         Coupon coupon = findCouponById(couponId);
         coupon.decreaseQuantity(1L);
 
         couponRepository.save(coupon);
 
-        return true;
+        return CouponResponseDto.of(coupon.getId(), coupon.getName());
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW) // 락 획득/해제 관련 로직과 비즈니스 로직의 트랜잭션을 분리하기 위해
+    @DistributedLock(key = "#couponId", waitTime = 10)
     public CouponResponseDto allocateCouponToUser(Long userId, Long couponId) {
         User user = findUserById(userId);
 
-        boolean success = decreaseCoupon(couponId);
+        CouponResponseDto couponResponseDto = decreaseCoupon(couponId);
+
         // 쿠폰 감소 로직이 성공하면 그 쿠폰을 유저에게 할당
-        if (success) {
-            List<CouponEmbeddable> userCoupons = user.getCoupons();
-            Coupon coupon = findCouponById(couponId);
-            String couponName = coupon.getName();
+        List<CouponEmbeddable> userCoupons = user.getCoupons();
+        userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
 
-            userCoupons.add(CouponEmbeddable.of(couponId, couponName));
-
-            userRepository.save(user);
-        }
+        userRepository.save(user);
 
         return CouponResponseDto.of(couponId);
     }

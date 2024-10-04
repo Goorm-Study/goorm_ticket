@@ -48,4 +48,16 @@ public class Event {
         this.ticketPrice = ticketPrice;
         this.ticketOpenTime = ticketOpenTime;
     }
+
+    public static Event of(String artist, String title, String description, String duration, String venue, int ticketPrice, LocalDateTime ticketOpenTime) {
+        return Event.builder()
+                .artist(artist)
+                .title(title)
+                .description(description)
+                .duration(duration)
+                .venue(venue)
+                .ticketPrice(ticketPrice)
+                .ticketOpenTime(ticketOpenTime)
+                .build();
+    }
 }

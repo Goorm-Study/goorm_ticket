@@ -32,6 +32,10 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // 레디스 분산락
+    implementation 'org.redisson:redisson-spring-boot-starter:3.26.0'
+
 }
 
 tasks.named('test') {

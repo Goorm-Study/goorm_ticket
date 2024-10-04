@@ -1,5 +1,6 @@
 package com.example.goorm_ticket.exception;
 
+import com.example.goorm_ticket.api.coupon.exception.CouponException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -19,5 +20,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body("잘못된 요청: " + e.getMessage());
+    }
+
+    @ExceptionHandler(CouponException.class)
+    public ResponseEntity<String> handleCouponException(CouponException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
     }
 }
