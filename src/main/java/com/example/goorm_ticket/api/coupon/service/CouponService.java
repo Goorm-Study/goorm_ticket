@@ -1,6 +1,5 @@
 package com.example.goorm_ticket.api.coupon.service;
 
-import com.example.goorm_ticket.aop.annotation.DistributedLock;
 import com.example.goorm_ticket.api.coupon.exception.CouponException;
 import com.example.goorm_ticket.domain.coupon.dto.CouponRequestDto;
 import com.example.goorm_ticket.domain.coupon.dto.CouponResponseDto;
@@ -22,7 +21,6 @@ import static com.example.goorm_ticket.api.coupon.exception.CouponException.*;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Slf4j
 public class CouponService {
     private final CouponRepository couponRepository;
@@ -50,6 +48,7 @@ public class CouponService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public CouponResponseDto decreaseCoupon(Long couponId) {
         Coupon coupon = findCouponById(couponId);
         coupon.decreaseQuantity(1L);
@@ -59,16 +58,15 @@ public class CouponService {
         return CouponResponseDto.of(coupon.getId(), coupon.getName());
     }
 
-    @DistributedLock(key = "#couponId")
+    @Transactional
     public CouponResponseDto allocateCouponToUser(Long userId, Long couponId) {
         User user = findUserById(userId);
 
         CouponResponseDto couponResponseDto = decreaseCoupon(couponId);
-        // 쿠폰 감소 로직이 성공하면 그 쿠폰을 유저에게 할당
+        // 쿠폰 감소 로직이 성공하면 그 쿠폰을 유저에게 할당, 실패 시
         List<CouponEmbeddable> userCoupons = user.getCoupons();
 
         userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
-
         userRepository.save(user);
 
         return CouponResponseDto.of(couponId);
