@@ -59,14 +59,14 @@ public class CouponService {
         return CouponResponseDto.of(coupon.getId(), coupon.getName());
     }
 
-    @DistributedLock(key = "#couponId", waitTime = 10)
+    @DistributedLock(key = "#couponId")
     public CouponResponseDto allocateCouponToUser(Long userId, Long couponId) {
         User user = findUserById(userId);
 
         CouponResponseDto couponResponseDto = decreaseCoupon(couponId);
-
         // 쿠폰 감소 로직이 성공하면 그 쿠폰을 유저에게 할당
         List<CouponEmbeddable> userCoupons = user.getCoupons();
+
         userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
 
         userRepository.save(user);
