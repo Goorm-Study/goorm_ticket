@@ -21,9 +21,4 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body("잘못된 요청: " + e.getMessage());
     }
-
-    @ExceptionHandler(CouponException.class)
-    public ResponseEntity<String> handleCouponException(CouponException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-    }
 }

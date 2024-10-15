@@ -5,6 +5,8 @@ import com.example.goorm_ticket.domain.user.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1/user")
@@ -24,18 +26,17 @@ public class UserController {
         return userService.getUserInfo(user_id);
     }
 
-// 아래 기능은 OrderRepository가 있어야 작동 확인 가능
 
-//
-//    // 주문 전체 조회
-//    @GetMapping("/mypage/orders")
-//    public List<UserOrderResponse> getAllOrders(@RequestParam Long user_id) {
-//        return userService.findAllOrders(user_id);
-//    }
-//
-//    // 주문 세부 조회
-//    @GetMapping("/mypage/orders/{order_id}")
-//    public UserOrderResponse getUserOrder(@PathVariable long order_id) {
-//        return userService.findOrderById(order_id);
-//    }
+
+    // 주문 전체 조회
+    @GetMapping("/mypage/orders")
+    public List<UserOrderResponseDto> getAllOrders(@RequestParam Long user_id) {
+        return userService.findAllOrders(user_id);
+    }
+
+    // 주문 세부 조회
+    @GetMapping("/mypage/orders/{order_id}")
+    public UserOrderResponseDto getUserOrder(@PathVariable long order_id) {
+        return userService.findOrderById(order_id);
+    }
 }
