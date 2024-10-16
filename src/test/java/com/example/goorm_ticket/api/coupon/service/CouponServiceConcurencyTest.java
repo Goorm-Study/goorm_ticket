@@ -77,4 +77,45 @@ class CouponServiceConcurencyTest {
         System.out.println("남은 쿠폰 수량: " + foundCoupon.getQuantity());
         assertThat(foundCoupon.getQuantity()).isNotEqualTo(0); //동시성 제어에 실패할 것
     }
+
+    @Test // 아직 동시성 처리 안해서 테스트 실패함
+    @DisplayName("100개의 스레드에서 동시에 쿠폰을 요청한다 - 비관적")
+    void allocateCouponTo100ThreadWithPessisticLock() throws InterruptedException {
+        // given
+        Coupon coupon = Coupon.of(100L,
+                "coupon1",
+                0.15,
+                LocalDateTime.of(2024, 12, 30, 0, 0)
+        );
+
+        couponRepository.save(coupon);
+
+        User user = User.builder()
+                .username("tester")
+                .password("1234")
+                .build();
+
+        userRepository.save(user);
+
+        // when
+        int threadCount = 100;
+        ExecutorService executorService = Executors.newFixedThreadPool(32);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        for(int i = 0; i < threadCount; i++) {
+            executorService.submit(() -> {
+                try {
+                    couponService.allocateCouponToUserWithPessimisticLock(user.getId(), coupon.getId());
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+
+        Coupon foundCoupon = couponRepository.findById(coupon.getId()).orElseThrow();
+        System.out.println("남은 쿠폰 수량: " + foundCoupon.getQuantity());
+        assertThat(foundCoupon.getQuantity()).isEqualTo(0); //동시성 제어 성공
+    }
 }

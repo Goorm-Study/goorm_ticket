@@ -55,27 +55,58 @@ public class CouponService {
 
         couponRepository.save(coupon);
 
-        return CouponResponseDto.of(coupon.getId(), coupon.getName());
+        return CouponResponseDto.of(
+                coupon.getId(),
+                coupon.getName(),
+                coupon.getQuantity(),
+                "쿠폰 발급 성공"
+        );
     }
 
     @Transactional
     public CouponResponseDto allocateCouponToUser(Long userId, Long couponId) {
         User user = findUserById(userId);
+
         CouponResponseDto couponResponseDto = decreaseCoupon(couponId);
 
-        try {
-            // 쿠폰 감소 로직이 성공하면 그 쿠폰을 유저에게 할당
-            couponResponseDto = decreaseCoupon(couponId);
-            List<CouponEmbeddable> userCoupons = user.getCoupons();
-            userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
-            userRepository.save(user);
+        List<CouponEmbeddable> userCoupons = user.getCoupons();
+        userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
+        userRepository.save(user);
 
-            // 성공 메시지 반환
-            return CouponResponseDto.of(couponId, couponResponseDto.getName(), "쿠폰 발급 성공");
-        } catch (CouponException e) {
-            // 실패 시 실패 메시지와 함께 예외를 다시 던짐
-            throw new CouponException(e.getMessage(), e.getErrorCode());
-        }
+        return couponResponseDto;
+    }
+
+    @Transactional
+    public CouponResponseDto decreaseCouponWithPessisticLock(Long couponId) {
+        Coupon coupon = findCouponById(couponId);
+        coupon.decreaseQuantity(1L);
+
+        couponRepository.save(coupon);
+
+        return CouponResponseDto.of(
+                coupon.getId(),
+                coupon.getName(),
+                coupon.getQuantity(),
+                "쿠폰 발급 성공"
+        );
+    }
+
+    @Transactional
+    public CouponResponseDto allocateCouponToUserWithPessimisticLock(Long userId, Long couponId) {
+        User user = findUserById(userId);
+
+        // 비관적 락을 사용하여 쿠폰을 가져옴
+        Coupon coupon = couponRepository.findByIdWithLock(couponId)
+                .orElseThrow(() -> new CouponNotFoundException(couponId));
+
+        CouponResponseDto couponResponseDto = decreaseCoupon(couponId);
+
+        List<CouponEmbeddable> userCoupons = user.getCoupons();
+        userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
+        userRepository.save(user);
+
+        return couponResponseDto;
+
     }
 
     private User findUserById(Long userId) {

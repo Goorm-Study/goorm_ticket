@@ -20,9 +20,16 @@ public class CouponController {
         return couponService.getAllCoupons();
     }
 
+    //동시성 제어 X
+//    @PostMapping("/{userId}/{couponId}")
+//    public CouponResponseDto allocateCouponToUser(@PathVariable Long userId, @PathVariable Long couponId) {
+//        return couponService.allocateCouponToUser(userId, couponId);
+//    }
+
+    //비관적 락 동시성 제어
     @PostMapping("/{userId}/{couponId}")
     public CouponResponseDto allocateCouponToUser(@PathVariable Long userId, @PathVariable Long couponId) {
-        return couponService.allocateCouponToUser(userId, couponId);
+        return couponService.allocateCouponToUserWithPessimisticLock(userId, couponId);
     }
 
     /*유저의 쿠폰을 조회하는 api는 UserController로 옮기는게 낫지 않을까*/
