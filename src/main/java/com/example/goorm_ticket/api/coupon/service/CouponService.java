@@ -10,6 +10,9 @@ import com.example.goorm_ticket.domain.user.entity.User;
 import com.example.goorm_ticket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -109,10 +112,14 @@ public class CouponService {
 
     }
 
+    @Retryable(
+            value = {ObjectOptimisticLockingFailureException.class},
+            maxAttempts = 100,
+            backoff = @Backoff(delay = 100)
+    )
     @Transactional
     public CouponResponseDto allocateCouponToUserWithOptimisticLock(Long userId, Long couponId) {
         User user = findUserById(userId);
-
 
         // 쿠폰 수량 감소 처리
         CouponResponseDto couponResponseDto = decreaseCoupon(couponId);
@@ -123,8 +130,6 @@ public class CouponService {
         userRepository.save(user);
 
         return couponResponseDto;
-
-
     }
 
     private User findUserById(Long userId) {

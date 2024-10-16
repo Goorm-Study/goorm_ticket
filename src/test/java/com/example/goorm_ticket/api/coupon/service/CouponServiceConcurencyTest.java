@@ -122,7 +122,7 @@ class CouponServiceConcurencyTest {
     }
 
     @Test
-    @DisplayName("100개의 스레드에서 동시에 쿠폰(10개)을 요청한다 - 낙관적 락 적용, 재시도X")
+    @DisplayName("100개의 스레드에서 동시에 쿠폰(10개)을 요청한다 - 낙관적 락 적용, 재시도X도 성공")
     void allocateCouponTo100ThreadWithOptimisticLock() throws InterruptedException {
         // given
         Coupon coupon = Coupon.of(10L,
@@ -173,6 +173,64 @@ class CouponServiceConcurencyTest {
 
         // then
         assertThat(successCount.get()).isEqualTo(10); // 성공한 쿠폰 발급이 10개인지 확인
+        System.out.println("발급된 쿠폰 수량: " + successCount.get());
+
+        // 재시도를 하지 않기 때문에 0개가 되지 않고 쿠폰이 남을 수 있음
+        assertThat(foundCoupon.getQuantity()).isGreaterThanOrEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("100개의 스레드에서 동시에 쿠폰(100개)을 요청한다 - 낙관적 락 적용, 재시도O")
+    void allocateCouponTo100ThreadWithOptimisticLockRetry() throws InterruptedException {
+        // given
+        Coupon coupon = Coupon.of(100L,
+                "coupon1",
+                0.15,
+                LocalDateTime.of(2024, 12, 30, 0, 0)
+        );
+
+        couponRepository.save(coupon);
+
+        User user = User.builder()
+                .username("tester")
+                .password("1234")
+                .build();
+
+        userRepository.save(user);
+
+        // when
+        int threadCount = 100;
+        ExecutorService executorService = Executors.newFixedThreadPool(32);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+        List<Future<CouponResponseDto>> futures = new ArrayList<>();
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failureCount = new AtomicInteger(0);
+
+        for (int i = 0; i < threadCount; i++) {
+            futures.add(executorService.submit(() -> {
+                try {
+                    // 낙관적 락이 걸린 쿠폰 발급 서비스 호출
+                    CouponResponseDto couponResponseDto = couponService.allocateCouponToUserWithOptimisticLock(user.getId(), coupon.getId());
+                    System.out.println("쿠폰 발급 완료");
+                    successCount.incrementAndGet();
+                    return couponResponseDto;
+                } catch (ObjectOptimisticLockingFailureException e) {
+                    System.out.println("낙관적 락 충돌 발생: " + e.getMessage());
+                    failureCount.incrementAndGet();
+                    return null;
+                } finally {
+                    latch.countDown();
+                }
+            }));
+        }
+
+        latch.await();
+
+        Coupon foundCoupon = couponRepository.findById(coupon.getId()).orElseThrow();
+        System.out.println("남은 쿠폰 수량: " + foundCoupon.getQuantity());
+
+        // then
+        assertThat(successCount.get()).isEqualTo(100); // 성공한 쿠폰 발급이 100개인지 확인
         System.out.println("발급된 쿠폰 수량: " + successCount.get());
 
         // 재시도를 하지 않기 때문에 0개가 되지 않고 쿠폰이 남을 수 있음
