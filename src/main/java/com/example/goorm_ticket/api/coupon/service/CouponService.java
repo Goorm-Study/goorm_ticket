@@ -109,6 +109,24 @@ public class CouponService {
 
     }
 
+    @Transactional
+    public CouponResponseDto allocateCouponToUserWithOptimisticLock(Long userId, Long couponId) {
+        User user = findUserById(userId);
+
+
+        // 쿠폰 수량 감소 처리
+        CouponResponseDto couponResponseDto = decreaseCoupon(couponId);
+
+        // 유저 쿠폰 리스트에 추가
+        List<CouponEmbeddable> userCoupons = user.getCoupons();
+        userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
+        userRepository.save(user);
+
+        return couponResponseDto;
+
+
+    }
+
     private User findUserById(Long userId) {
         return userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
     }
