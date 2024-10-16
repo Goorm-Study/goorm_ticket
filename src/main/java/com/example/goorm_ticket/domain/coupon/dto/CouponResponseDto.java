@@ -6,6 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+
+import com.example.goorm_ticket.domain.coupon.entity.CouponIssuance;
+
 @Getter
 @Builder
 public class CouponResponseDto {
@@ -14,10 +17,12 @@ public class CouponResponseDto {
     private String name;
     private Double discountRate;
     private LocalDateTime expirationDate;
+    private CouponIssuance isSuccess;
 
-    public static CouponResponseDto of(Long id) {
+    public static CouponResponseDto of(Long id, CouponIssuance isSuccess) {
         return CouponResponseDto.builder()
                 .id(id)
+                .isSuccess(isSuccess)
                 .build();
     }
 

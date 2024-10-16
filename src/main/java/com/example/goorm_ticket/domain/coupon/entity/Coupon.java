@@ -49,11 +49,13 @@ public class Coupon {
     }
 
     public void decreaseQuantity(Long quantity) {
-        if(this.quantity < quantity) {
-            throw new CouponQuantityShortageException(this.quantity, quantity);
-        }
+        validateSufficientQuantity(quantity);
         this.quantity -= quantity;
     }
 
-
+    private void validateSufficientQuantity(Long quantity) {
+        if (this.quantity < quantity) {
+            throw new CouponQuantityShortageException(this.quantity, quantity);
+        }
+    }
 }
