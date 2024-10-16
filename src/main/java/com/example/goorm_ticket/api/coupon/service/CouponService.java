@@ -61,15 +61,21 @@ public class CouponService {
     @Transactional
     public CouponResponseDto allocateCouponToUser(Long userId, Long couponId) {
         User user = findUserById(userId);
-
         CouponResponseDto couponResponseDto = decreaseCoupon(couponId);
-        // 쿠폰 감소 로직이 성공하면 그 쿠폰을 유저에게 할당, 실패 시
-        List<CouponEmbeddable> userCoupons = user.getCoupons();
 
-        userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
-        userRepository.save(user);
+        try {
+            // 쿠폰 감소 로직이 성공하면 그 쿠폰을 유저에게 할당
+            couponResponseDto = decreaseCoupon(couponId);
+            List<CouponEmbeddable> userCoupons = user.getCoupons();
+            userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
+            userRepository.save(user);
 
-        return CouponResponseDto.of(couponId);
+            // 성공 메시지 반환
+            return CouponResponseDto.of(couponId, couponResponseDto.getName(), "쿠폰 발급 성공");
+        } catch (CouponException e) {
+            // 실패 시 실패 메시지와 함께 예외를 다시 던짐
+            throw new CouponException(e.getMessage(), e.getErrorCode());
+        }
     }
 
     private User findUserById(Long userId) {

@@ -14,6 +14,7 @@ public class CouponResponseDto {
     private String name;
     private Double discountRate;
     private LocalDateTime expirationDate;
+    private String message;
 
     public static CouponResponseDto of(Long id) {
         return CouponResponseDto.builder()
@@ -27,6 +28,15 @@ public class CouponResponseDto {
                 .name(name)
                 .build();
     }
+
+    public static CouponResponseDto of(Long id, String name, String message) {
+        return CouponResponseDto.builder()
+                .id(id)
+                .name(name)
+                .message(message)
+                .build();
+    }
+
 
     public static CouponResponseDto of(Long id, Long quantity, String name, Double discountRate, LocalDateTime expirationDate) {
         return CouponResponseDto.builder()

@@ -34,7 +34,7 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // 레디스 분산락
-    implementation 'org.redisson:redisson-spring-boot-starter:3.26.0'
+    //implementation 'org.redisson:redisson-spring-boot-starter:3.26.0'
 
 }
 

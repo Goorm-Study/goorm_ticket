@@ -153,7 +153,7 @@ class CouponServiceTest {
         userRepository.save(user);
 
         // when, then
-        assertThatThrownBy(() -> couponService.getUserCoupons(user.getId()+1))
+        assertThatThrownBy(() -> couponService.getUserCoupons(999L))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasMessageContaining("존재하지 않는 회원입니다.");
 

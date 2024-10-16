@@ -31,6 +31,12 @@ public class CouponException extends RuntimeException {
         }
     }
 
+    public static class CouponAllocateFaileException extends CouponException {
+        public CouponAllocateFaileException(Long userId, Long couponId) {
+            super("쿠폰 발급 실패 ", "Coupon_Allocate_Failed");
+        }
+    }
+
 
 
 }
