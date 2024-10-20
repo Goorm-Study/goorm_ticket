@@ -8,8 +8,13 @@ import com.example.goorm_ticket.domain.coupon.entity.CouponEmbeddable;
 import com.example.goorm_ticket.domain.coupon.repository.CouponRepository;
 import com.example.goorm_ticket.domain.user.entity.User;
 import com.example.goorm_ticket.domain.user.repository.UserRepository;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.Redisson;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -18,7 +23,10 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import static com.example.goorm_ticket.api.coupon.exception.CouponException.*;
 
@@ -80,21 +88,6 @@ public class CouponService {
     }
 
     @Transactional
-    public CouponResponseDto decreaseCouponWithPessisticLock(Long couponId) {
-        Coupon coupon = findCouponById(couponId);
-        coupon.decreaseQuantity(1L);
-
-        couponRepository.save(coupon);
-
-        return CouponResponseDto.of(
-                coupon.getId(),
-                coupon.getName(),
-                coupon.getQuantity(),
-                "쿠폰 발급 성공"
-        );
-    }
-
-    @Transactional
     public CouponResponseDto allocateCouponToUserWithPessimisticLock(Long userId, Long couponId) {
         User user = findUserById(userId);
 
@@ -112,6 +105,7 @@ public class CouponService {
 
     }
 
+    //낙관적 락
     @Retryable(
             value = {ObjectOptimisticLockingFailureException.class},
             maxAttempts = 100,
@@ -130,6 +124,49 @@ public class CouponService {
         userRepository.save(user);
 
         return couponResponseDto;
+    }
+
+    //분산 락
+    @Autowired
+    private RedissonClient redissonClient;
+
+    @Transactional
+    public CouponResponseDto allocateCouponToUserWithRedis(Long userId, Long couponId) {
+        // RLock 객체 생성
+        RLock lock = redissonClient.getLock("couponLock:" + couponId);
+
+        try {
+            // 락을 10초 동안 대기하고, 1분 동안 락을 유지
+            if (lock.tryLock(30, 60, TimeUnit.SECONDS)) {
+                try {
+                    // 락이 성공적으로 획득되었을 때 실행할 로직
+                    System.out.println("락 획득: " + LocalDateTime.now());
+
+                    User user = findUserById(userId);
+
+                    CouponResponseDto couponResponseDto = decreaseCoupon(couponId);
+
+                    List<CouponEmbeddable> userCoupons = user.getCoupons();
+                    userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
+                    userRepository.save(user);
+
+                    return couponResponseDto;
+                } finally {
+                    if (lock.isLocked() && lock.isHeldByCurrentThread()) {
+                        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                            @Override
+                            public void afterCompletion(int status) {
+                                lock.unlock();
+                            }
+                        });
+                    }
+                }
+            } else {
+                throw new RuntimeException("쿠폰을 발급하는데 실패했습니다. 다른 사용자가 쿠폰을 발급 중입니다.");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("쿠폰 발급 중 오류가 발생했습니다.", e);
+        }
     }
 
     private User findUserById(Long userId) {

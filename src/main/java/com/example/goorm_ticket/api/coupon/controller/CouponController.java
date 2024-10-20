@@ -32,10 +32,16 @@ public class CouponController {
 //        return couponService.allocateCouponToUserWithPessimisticLock(userId, couponId);
 //    }
 
-    //낙관적 락 동시성 제어
+//    //낙관적 락 동시성 제어
+//    @PostMapping("/{userId}/{couponId}")
+//    public CouponResponseDto allocateCouponToUser(@PathVariable Long userId, @PathVariable Long couponId) {
+//        return couponService.allocateCouponToUserWithOptimisticLock(userId, couponId);
+//    }
+
+    // 분산 락 동시성 제어
     @PostMapping("/{userId}/{couponId}")
     public CouponResponseDto allocateCouponToUser(@PathVariable Long userId, @PathVariable Long couponId) {
-        return couponService.allocateCouponToUserWithOptimisticLock(userId, couponId);
+        return couponService.allocateCouponToUserWithRedis(userId, couponId);
     }
 
     /*유저의 쿠폰을 조회하는 api는 UserController로 옮기는게 낫지 않을까*/
