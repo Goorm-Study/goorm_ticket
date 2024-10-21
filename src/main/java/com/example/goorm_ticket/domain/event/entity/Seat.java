@@ -42,8 +42,12 @@ public class Seat {
         this.order = order;
         this.event = event;
     }
-
-
+    public void setSeatStatusLocked() {
+        this.seatStatus = SeatStatus.LOCKED;
+    }
+    public void setSeatStatusAvailable() {
+        this.seatStatus = SeatStatus.AVAILABLE;
+    }
     public void update(Order order, SeatStatus seatStatus) {
         this.order = order;
         this.seatStatus = seatStatus;

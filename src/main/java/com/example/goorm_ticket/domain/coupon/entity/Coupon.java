@@ -31,6 +31,12 @@ public class Coupon {
     @Column(nullable = false)
     private LocalDateTime expirationDate;
 
+    /*
+    * 낙관적 락을 위한 버전 추가
+    * */
+    @Version
+    private Long version;
+
     @Builder(access = AccessLevel.PRIVATE)
     private Coupon(Long quantity, String name, Double discountRate, LocalDateTime expirationDate) {
         this.quantity = quantity;

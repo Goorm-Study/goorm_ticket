@@ -1,6 +1,5 @@
 package com.example.goorm_ticket.api.order.service;
 
-import com.example.goorm_ticket.api.order.exception.BusinessException;
 import com.example.goorm_ticket.api.order.utils.DiscountCalculator;
 import com.example.goorm_ticket.domain.coupon.repository.CouponRepository;
 import com.example.goorm_ticket.domain.event.repository.SeatRepository;
@@ -16,6 +15,7 @@ import com.example.goorm_ticket.domain.order.entity.OrderStatus;
 import com.example.goorm_ticket.domain.user.entity.User;
 import com.example.goorm_ticket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +26,7 @@ import static com.example.goorm_ticket.api.order.exception.BusinessException.*;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class OrderService {
 
     private final OrderRepository orderRepository;
@@ -46,8 +47,15 @@ public class OrderService {
         User user = findUserById(userId);
 
         // 이벤트 ID 일치 여부 확인
-        if (!seat.getEvent().getId().equals(eventId)) {
-            throw new BusinessException.EventMismatchException(eventId, seat.getEvent().getId());
+        validateEventWithSeat(eventId, seat);
+
+        // 좌석 상태가 예매 가능한지 확인 후 LOCKED 상태로 변경
+        try {
+            validateAndLockSeatStatus(seat);
+            log.info("seat available");
+        } catch(InvalidSeatStatusException e) {
+            log.info("seat not available");
+            throw new InvalidSeatStatusException(SeatStatus.LOCKED);
         }
 
         // 쿠폰 할인 적용
@@ -59,11 +67,19 @@ public class OrderService {
         Order order = Order.of(totalPrice, OrderStatus.PENDING, couponId, eventId, user);
         orderRepository.save(order);
 
-        // 좌석 상태 변경 LOCKED
-        validateSeatStatus(seat, SeatStatus.AVAILABLE, SeatStatus.CANCELLED);
-        seat.update(order, SeatStatus.LOCKED);
-
         return OrderResponseDto.builder().seatId(seatId).build();
+    }
+
+    void validateEventWithSeat(Long eventId, Seat seat) {
+        if (!seat.getEvent().getId().equals(eventId)) {
+            throw new EventMismatchException(eventId, seat.getEvent().getId());
+        }
+    }
+
+    @Transactional
+    public void validateAndLockSeatStatus(Seat seat) {
+        validateSeatStatus(seat, SeatStatus.AVAILABLE, SeatStatus.CANCELLED);
+        seat.setSeatStatusLocked();
     }
 
     /**
@@ -98,9 +114,7 @@ public class OrderService {
         Order order = findOrderBySeat(seat);
 
         // 이벤트 ID 일치 여부 확인
-        if (!seat.getEvent().getId().equals(eventId)) {
-            throw new BusinessException.EventMismatchException(eventId, seat.getEvent().getId());
-        }
+        validateEventWithSeat(eventId, seat);
 
         // 주문 상태 변경: CANCELLED
         validateOrderStatus(order, OrderStatus.CONFIRMED, OrderStatus.PENDING);
