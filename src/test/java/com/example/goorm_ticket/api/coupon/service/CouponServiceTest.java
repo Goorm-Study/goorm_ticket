@@ -50,6 +50,7 @@ class CouponServiceTest {
     @Test
     @DisplayName("쿠폰 2개를 넣은 후 전체 쿠폰 목록을 조회한다.")
     void getAllCoupons() {
+        // given
         User user = User.builder()
                 .username("tester")
                 .password("1234")
@@ -215,45 +216,67 @@ class CouponServiceTest {
 //        assertThat(coupon.getQuantity()).isEqualTo(99L);
 //    }
 //}
+    public interface Callback {
+        void allocateCouponToUserWithLock(Long userId, Long couponId);
+    }
 
+    public class AllocateCouponTestTemplate {
+        public void allocateCouponTo100Thread(Callback callback) throws InterruptedException {
+            // given
+            Coupon coupon = Coupon.of(100L,
+                    "coupon1",
+                    0.15,
+                    LocalDateTime.of(2024, 12, 30, 0, 0)
+            );
 
-    @Test // 아직 동시성 처리 안해서 테스트 실패함
-    @DisplayName("100개의 스레드에서 동시에 쿠폰을 요청한다.")
-    void allocateCouponTo100Thread() throws InterruptedException {
-        // given
-        Coupon coupon = Coupon.of(100L,
-                "coupon1",
-                0.15,
-                LocalDateTime.of(2024, 12, 30, 0, 0)
-        );
+            couponRepository.save(coupon);
 
-        couponRepository.save(coupon);
+            User user = User.builder()
+                    .username("tester")
+                    .password("1234")
+                    .build();
 
-        User user = User.builder()
-                .username("tester")
-                .password("1234")
-                .build();
+            userRepository.save(user);
 
-        userRepository.save(user);
+            // when
+            int threadCount = 100;
+            ExecutorService executorService = Executors.newFixedThreadPool(32);
+            CountDownLatch latch = new CountDownLatch(threadCount);
 
-        // when
-        int threadCount = 100;
-        ExecutorService executorService = Executors.newFixedThreadPool(32);
-        CountDownLatch latch = new CountDownLatch(threadCount);
+            for(int i = 0; i < threadCount; i++) {
+                executorService.submit(() -> {
+                    try {
+                        callback.allocateCouponToUserWithLock(user.getId(), coupon.getId());
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
 
-        for(int i = 0; i < threadCount; i++) {
-            executorService.submit(() -> {
-                try {
-                    couponService.allocateCouponToUser(user.getId(), coupon.getId());
-                } finally {
-                    latch.countDown();
-                }
-            });
+            latch.await();
+
+            // then
+            Coupon foundCoupon = couponRepository.findById(coupon.getId()).orElseThrow();
+            assertEquals(0, foundCoupon.getQuantity());
         }
+    }
 
-        latch.await();
-
-        Coupon foundCoupon = couponRepository.findById(coupon.getId()).orElseThrow();
-        assertEquals(0, foundCoupon.getQuantity());
+    @Test
+    @DisplayName("100개의 스레드가 비관적 락을 사용해 동시에 쿠폰을 요청한다.")
+    public void allocateCouponTo100ThreadWithPessimisticLock() throws InterruptedException {
+        AllocateCouponTestTemplate template = new AllocateCouponTestTemplate();
+        template.allocateCouponTo100Thread((userId, couponId) -> couponService.allocateCouponToUserWithPessimisticLock(userId, couponId));
+    }
+    @Test
+    @DisplayName("100개의 스레드가 네임드 락을 사용해 동시에 쿠폰을 요청한다.")
+    public void allocateCouponTo100ThreadWithNamedLock() throws InterruptedException {
+        AllocateCouponTestTemplate template = new AllocateCouponTestTemplate();
+        template.allocateCouponTo100Thread((userId, couponId) -> couponService.allocateCouponToUserWithNamedLock(userId, couponId));
+    }
+    @Test
+    @DisplayName("100개의 스레드가 redisson 분산 락을 사용해 동시에 쿠폰을 요청한다.")
+    public void allocateCouponTo100ThreadWithDistributedLock() throws InterruptedException {
+        AllocateCouponTestTemplate template = new AllocateCouponTestTemplate();
+        template.allocateCouponTo100Thread((userId, couponId) -> couponService.allocateCouponToUserWithDistributedLock(userId, couponId));
     }
 }
