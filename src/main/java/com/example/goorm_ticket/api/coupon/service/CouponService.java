@@ -1,5 +1,7 @@
 package com.example.goorm_ticket.api.coupon.service;
 
+import com.example.goorm_ticket.aop.annotation.DistributedLock;
+import com.example.goorm_ticket.aop.annotation.NamedLock;
 import com.example.goorm_ticket.api.coupon.exception.CouponException;
 import com.example.goorm_ticket.domain.coupon.dto.CouponRequestDto;
 import com.example.goorm_ticket.domain.coupon.dto.CouponResponseDto;
@@ -59,8 +61,44 @@ public class CouponService {
         return CouponResponseDto.of(coupon.getId(), coupon.getName());
     }
 
-    @Transactional(value = "businessTransactionManager", propagation = Propagation.REQUIRES_NEW)
-    public CouponResponseDto allocateCouponToUser(Long userId, Long couponId) {
+    @Transactional
+    public CouponResponseDto decreaseCouponWithPessimisticLock(Long couponId) {
+        Coupon coupon = findCouponByIdWithPessimisticLock(couponId);
+        coupon.decreaseQuantity(1L);
+
+        couponRepository.save(coupon);
+
+        return CouponResponseDto.of(coupon.getId(), coupon.getName());
+    }
+
+    @Transactional
+    public CouponResponseDto allocateCouponToUserWithPessimisticLock(Long userId, Long couponId) {
+        User user = findUserById(userId);
+
+        CouponResponseDto couponResponseDto = decreaseCouponWithPessimisticLock(couponId);
+
+        List<CouponEmbeddable> userCoupons = user.getCoupons();
+        userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
+        userRepository.save(user);
+
+        return CouponResponseDto.of(couponId);
+    }
+
+    @NamedLock(lockKey = "'coupon' + #couponId")
+    public CouponResponseDto allocateCouponToUserWithNamedLock(Long userId, Long couponId) {
+        User user = findUserById(userId);
+
+        CouponResponseDto couponResponseDto = decreaseCoupon(couponId);
+
+        List<CouponEmbeddable> userCoupons = user.getCoupons();
+        userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
+        userRepository.save(user);
+
+        return CouponResponseDto.of(couponId);
+    }
+
+    @DistributedLock(key = "'coupon' + #couponId")
+    public CouponResponseDto allocateCouponToUserWithDistributedLock(Long userId, Long couponId) {
         User user = findUserById(userId);
 
         CouponResponseDto couponResponseDto = decreaseCoupon(couponId);
@@ -76,8 +114,11 @@ public class CouponService {
         return userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
     }
 
-
     private Coupon findCouponById(Long couponId) {
         return couponRepository.findById(couponId).orElseThrow(() -> new CouponNotFoundException(couponId));
+    }
+
+    public Coupon findCouponByIdWithPessimisticLock(Long couponId) {
+        return couponRepository.findByIdWithPessimisticLock(couponId).orElseThrow(() -> new CouponException.CouponNotFoundException(couponId));
     }
 }

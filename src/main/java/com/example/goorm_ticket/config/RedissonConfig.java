@@ -21,6 +21,7 @@ public class RedissonConfig {
     public RedissonClient redissonClient() {
         RedissonClient redisson = null;
         Config config = new Config();
+        // 레디스 싱글 인스턴스 사용
         config.useSingleServer().setAddress(REDISSON_HOST_PREFIX + redisHost + ":" + redisPort);
         redisson = Redisson.create(config);
         return redisson;

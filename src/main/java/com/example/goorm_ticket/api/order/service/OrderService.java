@@ -50,13 +50,7 @@ public class OrderService {
         validateEventWithSeat(eventId, seat);
 
         // 좌석 상태가 예매 가능한지 확인 후 LOCKED 상태로 변경
-        try {
-            validateAndLockSeatStatus(seat);
-            log.info("seat available");
-        } catch(InvalidSeatStatusException e) {
-            log.info("seat not available");
-            throw new InvalidSeatStatusException(SeatStatus.LOCKED);
-        }
+        validateAndLockSeatStatus(seat);
 
         // 쿠폰 할인 적용
         int ticketPrice = seat.getEvent().getTicketPrice();

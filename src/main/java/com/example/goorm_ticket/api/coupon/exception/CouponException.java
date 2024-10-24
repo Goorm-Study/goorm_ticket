@@ -13,6 +13,12 @@ public class CouponException extends RuntimeException {
         this.errorCode = errorCode;
     }
 
+
+    public CouponException(String message, Throwable e, String errorCode) {
+        super(message, e);
+        this.errorCode = errorCode;
+    }
+
     public static class CouponQuantityShortageException extends CouponException {
         public CouponQuantityShortageException(Long remaining, Long quantity) {
             super("남은 쿠폰의 개수가 요청한 개수보다 적습니다. 남은 수량: " + remaining + ", 요청한 수량: " + quantity, "COUPON_SHORTAGE");

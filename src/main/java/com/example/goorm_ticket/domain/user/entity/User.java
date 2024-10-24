@@ -25,7 +25,6 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    // 다대다 관계여서 user_id를 키로 사용하는 hashmap은 못쓰고...그냥 임베디드 타입의 리스트로 했습니다
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "user_coupon", joinColumns = @JoinColumn(name = "user_id"))
     private List<CouponEmbeddable> coupons = new ArrayList<>();

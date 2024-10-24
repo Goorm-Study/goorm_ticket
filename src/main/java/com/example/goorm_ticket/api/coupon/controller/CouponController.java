@@ -1,10 +1,6 @@
 package com.example.goorm_ticket.api.coupon.controller;
 
-import com.example.goorm_ticket.api.coupon.service.CouponService;
-import com.example.goorm_ticket.api.coupon.service.NamedLockCouponFacade;
-import com.example.goorm_ticket.api.coupon.service.OptimisticLockCouponService;
-import com.example.goorm_ticket.api.coupon.service.PessimisticLockCouponService;
-import com.example.goorm_ticket.domain.coupon.dto.CouponRequestDto;
+import com.example.goorm_ticket.api.coupon.service.*;
 import com.example.goorm_ticket.domain.coupon.dto.CouponResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -17,36 +13,26 @@ import java.util.List;
 public class CouponController {
 
     private final CouponService couponService;
-    private final OptimisticLockCouponService optimisticLockCouponService;
-    private final PessimisticLockCouponService pessimisticLockCouponService;
-    private final NamedLockCouponFacade namedLockCouponFacade;
 
     @GetMapping
     public List<CouponResponseDto> getAllCoupons() {
         return couponService.getAllCoupons();
     }
 
-    @PostMapping("/{userId}/{couponId}")
-    public CouponResponseDto allocateCouponToUser(@PathVariable Long userId, @PathVariable Long couponId) {
-        return couponService.allocateCouponToUser(userId, couponId);
-    }
-
-    @PostMapping("/opt/{userId}/{couponId}")
-    public CouponResponseDto allocateCouponToUserWithOptimisticLock(@PathVariable Long userId, @PathVariable Long couponId) {
-        return optimisticLockCouponService.allocateCouponToUserWithOptimisticLock(userId, couponId);
-    }
-
     @PostMapping("/pes/{userId}/{couponId}")
     public CouponResponseDto allocateCouponToUserWithPessimisticLock(@PathVariable Long userId, @PathVariable Long couponId) {
-        return pessimisticLockCouponService.allocateCouponToUserWithPessimisticLock(userId, couponId);
+        return couponService.allocateCouponToUserWithPessimisticLock(userId, couponId);
     }
 
     @PostMapping("/nam/{userId}/{couponId}")
     public CouponResponseDto allocateCouponToUserWithNamedLock(@PathVariable Long userId, @PathVariable Long couponId) {
-        return namedLockCouponFacade.allocateCouponToUserWithNamedLock(userId, couponId);
+        return couponService.allocateCouponToUserWithNamedLock(userId, couponId);
     }
 
-
+    @PostMapping("/dis/{userId}/{couponId}")
+    public CouponResponseDto allocateCouponToUserWithDistributedLock(@PathVariable Long userId, @PathVariable Long couponId) {
+        return couponService.allocateCouponToUserWithDistributedLock(userId, couponId);
+    }
 
     /*유저의 쿠폰을 조회하는 api는 UserController로 옮기는게 낫지 않을까*/
     @GetMapping("/{userId}/coupons")
