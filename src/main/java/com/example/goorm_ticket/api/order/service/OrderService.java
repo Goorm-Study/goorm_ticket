@@ -43,7 +43,7 @@ public class OrderService {
         Long userId = orderDto.getUserId();
         Long seatId = orderDto.getSeatId();
 
-        Seat seat = findSeatWithEvent(seatId);
+        Seat seat = findSeatWithEventWithPessimisticLock(seatId);
         User user = findUserById(userId);
 
         // 이벤트 ID 일치 여부 확인
@@ -132,8 +132,8 @@ public class OrderService {
     /**
      * 좌석 및 이벤트 조회
      */
-    public Seat findSeatWithEvent(Long seatId) {
-        return seatRepository.findByIdWithEvent(seatId)
+    public Seat findSeatWithEventWithPessimisticLock(Long seatId) {
+        return seatRepository.findByIdWithEventWithPessimisticLock(seatId)
                 .orElseThrow(() -> new SeatNotFoundException(seatId));
     }
 

@@ -18,5 +18,5 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT s FROM Seat s JOIN FETCH s.event WHERE s.id = :seatId")
-    Optional<Seat> findByIdWithEvent(@Param("seatId") Long seatId);
+    Optional<Seat> findByIdWithEventWithPessimisticLock(@Param("seatId") Long seatId);
 }
