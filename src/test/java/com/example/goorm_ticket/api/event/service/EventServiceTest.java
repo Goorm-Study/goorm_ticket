@@ -123,7 +123,7 @@ public class EventServiceTest {
 
 
     private Event createEvent(String title) {
-        return Event.of(title, "artist", "description", "9/28~9/30", "venue", 10000, LocalDateTime.now());
+        return Event.of( "artist", title, "description", "9/28~9/30", "venue", 10000, LocalDateTime.now());
     }
 
 }
