@@ -21,7 +21,7 @@ import java.lang.reflect.Method;
 @Slf4j
 public class NamedLockAspect {
     private final LockRepository lockRepository;
-    private final businessTransactionHandler businessTransactionHandler;
+    private final BusinessTransactionHandler businessTransactionHandler;
     private final TransactionTemplate transactionTemplate;
     private static final String NAMED_LOCK_PREFIX = "LOCK:";
 

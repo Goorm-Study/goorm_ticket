@@ -22,7 +22,7 @@ public class DistributedLockAspect {
     private static final String REDISSON_LOCK_PREFIX = "LOCK:";
 
     private final RedissonClient redissonClient;
-    private final businessTransactionHandler businessTransactionHandler;
+    private final BusinessTransactionHandler businessTransactionHandler;
 
     @Around("@annotation(com.example.goorm_ticket.aop.annotation.DistributedLock)")
     public Object lock(final ProceedingJoinPoint joinPoint) throws Throwable {

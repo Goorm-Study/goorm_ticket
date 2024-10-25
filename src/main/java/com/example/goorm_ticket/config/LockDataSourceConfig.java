@@ -55,7 +55,6 @@ public class LockDataSourceConfig {
         return new JpaTransactionManager(entityManagerFactory);
     }
 
-
     @Bean
     public TransactionTemplate transactionTemplate(
             @Qualifier("lockTransactionManager") PlatformTransactionManager transactionManager) {

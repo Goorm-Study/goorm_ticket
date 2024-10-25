@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
-public class businessTransactionHandler {
+public class BusinessTransactionHandler {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Object proceed(final ProceedingJoinPoint joinPoint) throws Throwable {
         return joinPoint.proceed();
