@@ -1,9 +1,10 @@
 package com.example.goorm_ticket.config;
 
+import com.zaxxer.hikari.HikariDataSource;
 import jakarta.persistence.EntityManagerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -25,16 +26,24 @@ import java.util.HashMap;
         transactionManagerRef = "lockTransactionManager"
 )
 public class LockDataSourceConfig {
+    @Bean(name = "lock-DataSourceConfig")
+    @ConfigurationProperties("spring.datasource.lock")
+    public DataSourceProperties dataSourceProperties() {
+        return new DataSourceProperties();
+    }
     @Bean(name = "lockDataSource")
-    @ConfigurationProperties(prefix = "spring.datasource.lock")
-    public DataSource lockDataSource() {
-        return DataSourceBuilder.create().build();
+    @ConfigurationProperties("spring.datasource.lock.hikari")
+    public DataSource lockDataSource(@Qualifier("lock-DataSourceConfig") DataSourceProperties dataSourceProperties) {
+        return dataSourceProperties
+                .initializeDataSourceBuilder()
+                .type(HikariDataSource.class)
+                .build();
     }
 
     @Bean(name = "lockEntityManagerFactory")
-    public LocalContainerEntityManagerFactoryBean lockEntityManagerFactory() {
+    public LocalContainerEntityManagerFactoryBean lockEntityManagerFactory(@Qualifier("lockDataSource") DataSource dataSource) {
         LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
-        emf.setDataSource(lockDataSource());
+        emf.setDataSource(dataSource);
         emf.setPackagesToScan("com.example.goorm_ticket.lockdomain");
         emf.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
 

@@ -1,10 +1,10 @@
 package com.example.goorm_ticket.config;
 
+import com.zaxxer.hikari.HikariDataSource;
 import jakarta.persistence.EntityManagerFactory;
-import org.hibernate.jpa.boot.spi.EntityManagerFactoryBuilder;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -28,17 +28,26 @@ import java.util.HashMap;
 public class BusinessDatasourceConfig {
 
     @Primary
+    @Bean(name = "business-DataSourceConfig")
+    @ConfigurationProperties("spring.datasource.business")
+    public DataSourceProperties dataSourceProperties() {
+        return new DataSourceProperties();
+    }
+    @Primary
     @Bean(name = "businessDataSource")
-    @ConfigurationProperties(prefix = "spring.datasource.business")
-    public DataSource businessDataSource() {
-        return DataSourceBuilder.create().build();
+    @ConfigurationProperties("spring.datasource.business.hikari")
+    public DataSource businessDataSource(@Qualifier("business-DataSourceConfig") DataSourceProperties dataSourceProperties) {
+        return dataSourceProperties
+                .initializeDataSourceBuilder()
+                .type(HikariDataSource.class)
+                .build();
     }
 
     @Primary
     @Bean(name = "businessEntityManagerFactory")
-    public LocalContainerEntityManagerFactoryBean businessEntityManagerFactory() {
+    public LocalContainerEntityManagerFactoryBean businessEntityManagerFactory(@Qualifier("businessDataSource") DataSource dataSource) {
         LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
-        emf.setDataSource(businessDataSource());
+        emf.setDataSource(dataSource);
         emf.setPackagesToScan("com.example.goorm_ticket.domain");
         emf.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
 
