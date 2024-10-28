@@ -75,7 +75,6 @@ public class CouponService {
 
         List<CouponEmbeddable> userCoupons = user.getCoupons();
         userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
-        userRepository.save(user); // 영속성 컨텍스트에서 변경 감지 안되므로 직접 save 호출
 
         return CouponResponseDto.of(couponId);
     }
@@ -88,7 +87,6 @@ public class CouponService {
 
         List<CouponEmbeddable> userCoupons = user.getCoupons();
         userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
-        userRepository.save(user); // 영속성 컨텍스트에서 변경 감지 안되므로 직접 save 호출
 
         return CouponResponseDto.of(couponId);
     }
@@ -101,7 +99,6 @@ public class CouponService {
 
         List<CouponEmbeddable> userCoupons = user.getCoupons();
         userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
-        userRepository.save(user);
 
         return CouponResponseDto.of(couponId);
     }
