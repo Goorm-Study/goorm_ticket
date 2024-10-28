@@ -14,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -158,8 +159,12 @@ class CouponServiceIntegrationTest {
     public class AllocateCouponTestTemplate {
         public void allocateCouponTo100Thread(Callback callback) throws InterruptedException {
             // given
-            User user = createUser("tester");
-            userRepository.save(user);
+            List<User> users = new ArrayList<>();
+            for (int i = 0; i < 100; i++) {
+                User user = createUser("tester" + i);
+                users.add(user);
+            }
+            userRepository.saveAll(users);
 
             Coupon coupon = createCoupon("coupon");
             couponRepository.save(coupon);
@@ -170,6 +175,7 @@ class CouponServiceIntegrationTest {
             CountDownLatch latch = new CountDownLatch(threadCount);
 
             for(int i = 0; i < threadCount; i++) {
+                User user = users.get(i);
                 executorService.submit(() -> {
                     try {
                         callback.allocateCouponToUserWithLock(user.getId(), coupon.getId());
