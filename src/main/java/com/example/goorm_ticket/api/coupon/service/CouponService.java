@@ -56,8 +56,6 @@ public class CouponService {
         Coupon coupon = findCouponById(couponId);
         coupon.decreaseQuantity(1L);
 
-        couponRepository.save(coupon);
-
         return CouponResponseDto.of(coupon.getId(), coupon.getName());
     }
 
@@ -65,8 +63,6 @@ public class CouponService {
     public CouponResponseDto decreaseCouponWithPessimisticLock(Long couponId) {
         Coupon coupon = findCouponByIdWithPessimisticLock(couponId);
         coupon.decreaseQuantity(1L);
-
-        couponRepository.save(coupon);
 
         return CouponResponseDto.of(coupon.getId(), coupon.getName());
     }
@@ -79,7 +75,7 @@ public class CouponService {
 
         List<CouponEmbeddable> userCoupons = user.getCoupons();
         userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
-        userRepository.save(user);
+        userRepository.save(user); // 영속성 컨텍스트에서 변경 감지 안되므로 직접 save 호출
 
         return CouponResponseDto.of(couponId);
     }
@@ -92,7 +88,7 @@ public class CouponService {
 
         List<CouponEmbeddable> userCoupons = user.getCoupons();
         userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
-        userRepository.save(user);
+        userRepository.save(user); // 영속성 컨텍스트에서 변경 감지 안되므로 직접 save 호출
 
         return CouponResponseDto.of(couponId);
     }
