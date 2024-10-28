@@ -32,11 +32,7 @@ class CouponRepositoryTest {
     @DisplayName("쿠폰을 저장한다.")
     public void saveCoupon() {
         // given, when
-        Coupon coupon = Coupon.of(100L,
-                "coupon",
-                0.15,
-                LocalDateTime.of(2024, 12, 30, 0, 0)
-        );
+        Coupon coupon = createCoupon();
 
         Coupon savedCoupon = couponRepository.save(coupon);
 
@@ -46,17 +42,11 @@ class CouponRepositoryTest {
         assertEquals(coupon.getDiscountRate(), savedCoupon.getDiscountRate());
         assertEquals(coupon.getExpirationDate(), savedCoupon.getExpirationDate());
     }
-
     @Test
     @DisplayName("쿠폰을 조회한다.")
     public void findCouponById() {
         // given
-        Coupon coupon = Coupon.of(100L,
-                "coupon",
-                0.15,
-                LocalDateTime.of(2024, 12, 30, 0, 0)
-        );
-
+        Coupon coupon = createCoupon();
         couponRepository.save(coupon);
 
         // when
@@ -71,11 +61,7 @@ class CouponRepositoryTest {
     @DisplayName("쿠폰을 삭제한다.")
     public void deleteCoupon() {
         // given
-        Coupon coupon = Coupon.of(100L,
-                "coupon",
-                0.15,
-                LocalDateTime.of(2024, 12, 30, 0, 0)
-        );
+        Coupon coupon = createCoupon();
         Coupon savedCoupon = couponRepository.save(coupon);
 
         // when
@@ -90,26 +76,36 @@ class CouponRepositoryTest {
     @DisplayName("사용자의 쿠폰 리스트에 쿠폰을 추가한다.")
     public void saveUserWithCoupons() {
         // given
-        User user = User.builder()
-                .username("tester")
-                .password("1234")
-                .build();
+        User user = createUser();
         User savedUser = userRepository.save(user);
 
-        Coupon coupon = Coupon.of(100L,
-                "coupon",
-                0.15,
-                LocalDateTime.of(2024, 12, 30, 0, 0)
-        );
+        Coupon coupon = createCoupon();
         Coupon savedCoupon = couponRepository.save(coupon);
 
+        // when
         List<CouponEmbeddable> userCoupons = savedUser.getCoupons();
         userCoupons.add(CouponEmbeddable.of(savedCoupon.getId(), savedCoupon.getName()));
         userRepository.save(user);
 
+        // then
         Optional<User> foundUser = userRepository.findById(savedUser.getId());
         assertEquals(1, foundUser.get().getCoupons().size());
         assertEquals("coupon", foundUser.get().getCoupons().get(0).getName());
+    }
+
+    private static Coupon createCoupon() {
+        return Coupon.of(100L,
+                "coupon",
+                0.15,
+                LocalDateTime.of(2024, 12, 30, 0, 0)
+        );
+    }
+
+    private static User createUser() {
+        return User.builder()
+                .username("tester")
+                .password("1234")
+                .build();
     }
 
 }

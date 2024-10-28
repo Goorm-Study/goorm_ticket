@@ -77,7 +77,9 @@ public class CouponService {
 
         CouponResponseDto couponResponseDto = decreaseCouponWithPessimisticLock(couponId);
 
-        addCouponToUserCoupons(user, couponResponseDto);
+        List<CouponEmbeddable> userCoupons = user.getCoupons();
+        userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
+        userRepository.save(user);
 
         return CouponResponseDto.of(couponId);
     }
@@ -88,7 +90,9 @@ public class CouponService {
 
         CouponResponseDto couponResponseDto = decreaseCoupon(couponId);
 
-        addCouponToUserCoupons(user, couponResponseDto);
+        List<CouponEmbeddable> userCoupons = user.getCoupons();
+        userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
+        userRepository.save(user);
 
         return CouponResponseDto.of(couponId);
     }
@@ -99,15 +103,11 @@ public class CouponService {
 
         CouponResponseDto couponResponseDto = decreaseCoupon(couponId);
 
-        addCouponToUserCoupons(user, couponResponseDto);
-
-        return CouponResponseDto.of(couponId);
-    }
-
-    private void addCouponToUserCoupons(User user, CouponResponseDto couponResponseDto) {
         List<CouponEmbeddable> userCoupons = user.getCoupons();
         userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
         userRepository.save(user);
+
+        return CouponResponseDto.of(couponId);
     }
 
     private User findUserById(Long userId) {
