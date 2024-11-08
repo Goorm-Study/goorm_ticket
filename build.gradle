@@ -36,6 +36,10 @@ dependencies {
     // 레디스 분산락
     implementation 'org.redisson:redisson-spring-boot-starter:3.26.0'
 
+    // redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-batch'
+
 }
 
 tasks.named('test') {

@@ -31,6 +31,11 @@ public class CouponException extends RuntimeException {
         }
     }
 
+    public static class RankNotFoundException extends CouponException {
+        public RankNotFoundException(Long userId, Long couponId) {
+            super("대기열에서 순번을 찾을 수 없습니다. 회원 ID: " + userId + ", 쿠폰 ID: " + couponId, "RANK_NOT_FOUND");
+        }
+    }
 
 
 }
