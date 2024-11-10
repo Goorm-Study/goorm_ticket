@@ -1,7 +1,5 @@
 package com.example.goorm_ticket.api.coupon.exception;
 
-import com.example.goorm_ticket.domain.coupon.dto.CouponResponseDto;
-import com.example.goorm_ticket.domain.coupon.entity.Coupon;
 import lombok.Getter;
 
 @Getter
@@ -36,7 +34,5 @@ public class CouponException extends RuntimeException {
             super("존재하지 않는 회원입니다. 회원 ID: " + userId, "USER_NOT_FOUND");
         }
     }
-
-
 
 }
