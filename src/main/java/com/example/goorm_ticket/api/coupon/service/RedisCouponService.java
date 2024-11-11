@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
@@ -43,7 +44,7 @@ public class RedisCouponService {
     // 현재 대기열의 순번을 사용자에게 제공
     public void getBatchUsers(){
 
-        Set<String> users = redisTemplate.opsForZSet().range(ENTER_KEY, 0, -1);
+        Set<String> users = redisTemplate.opsForZSet().range(WAIT_KEY, 0, -1);
 
         if(!users.isEmpty() && users != null) {
             for (String user : users) {
@@ -56,13 +57,14 @@ public class RedisCouponService {
     // Enter 대기열에 들어온 이들에게 쿠폰을 발급
     public void publish(){
         Set<String> enterQueue = redisTemplate.opsForZSet().range(ENTER_KEY, 0, BATCHSIZE-1);
+
         if(!enterQueue.isEmpty() && enterQueue != null) {
             for(Object person : enterQueue){
                 String[] p = person.toString().split(":");
                 Long userId = Long.parseLong(p[0]);
                 Long couponId = Long.parseLong(p[1]);
                 couponService.allocateCouponToUser(userId, couponId);
-                redisTemplate.opsForZSet().remove(ENTER_KEY, person);
+                redisTemplate.opsForZSet().remove(WAIT_KEY, person);
                 log.info("{}님에게 쿠폰이 발급되었습니다!", userId);
             }
         }

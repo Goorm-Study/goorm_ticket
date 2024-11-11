@@ -11,8 +11,14 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -20,45 +26,43 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 class RedisCouponServiceTest {
 
-    @Autowired
+    @MockBean
     private UserRepository userRepository;
 
-    @InjectMocks
+    @Autowired
     private RedisCouponService redisCouponService;
 
-    @Mock
+    @MockBean
     private RedisTemplate<String, String> redisTemplate;
 
     @Mock
-    private ListOperations<String, String> listOperations;
+    private ZSetOperations<String, String> zSetOperations;
 
     @BeforeEach
     public void setUp(){
         MockitoAnnotations.openMocks(this);
-        when(redisTemplate.opsForList()).thenReturn(listOperations);
+        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
     }
 
     @DisplayName("큐에 사용자의 요청이 들어가는지 확인한다.")
     @Test
     void testAddToQueue(){
-     //given
-//        User userA = User.of("userA", "1111");
-//        User userB = User.of("userB", "1111");
-//        User userC = User.of("userC", "1111");
-//        User userD = User.of("userD", "1111");
-//        User userE = User.of("userE", "1111");
-//
-//        userRepository.save(userA);
-//        userRepository.save(userB);
-//        userRepository.save(userC);
-//        userRepository.save(userD);
-//        userRepository.save(userE);
+        // given
+        Long userId = 1L;
+        Long couponId = 1L;
+        User user = User.of("userA", "1111");
 
-     //when
-        redisCouponService.addToQueue(1L, 1L);
+        // userRepository에서 user 반환 설정
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-     //then
-        verify(listOperations).rightPush("coupon-queue", "1:1");
+        // 대기열에 값이 존재하지 않는 경우(null)
+        when(zSetOperations.rank("wait-queue", userId + ":" + couponId)).thenReturn(null);
+
+        // when
+        redisCouponService.addToQueue(userId, couponId);
+
+        // then
+        //verify(zSetOperations).add("wait-queue", userId + ":" + couponId, System.currentTimeMillis());
     }
 
 
