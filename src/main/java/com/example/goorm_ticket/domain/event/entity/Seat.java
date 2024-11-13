@@ -43,7 +43,6 @@ public class Seat {
         this.event = event;
     }
 
-
     public void update(Order order, SeatStatus seatStatus) {
         this.order = order;
         this.seatStatus = seatStatus;

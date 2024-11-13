@@ -126,4 +126,5 @@ public class EventServiceTest {
         return Event.of(title, "artist", "description", "9/28~9/30", "venue", 10000, LocalDateTime.now());
     }
 
+
 }

@@ -15,7 +15,9 @@ import com.example.goorm_ticket.domain.order.entity.Order;
 import com.example.goorm_ticket.domain.order.entity.OrderStatus;
 import com.example.goorm_ticket.domain.user.entity.User;
 import com.example.goorm_ticket.domain.user.repository.UserRepository;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +44,7 @@ public class OrderService {
         Long userId = orderDto.getUserId();
         Long seatId = orderDto.getSeatId();
 
+
         Seat seat = findSeatWithEvent(seatId);
         User user = findUserById(userId);
 
@@ -60,9 +63,10 @@ public class OrderService {
         orderRepository.save(order);
 
         // 좌석 상태 변경 LOCKED
-        validateSeatStatus(seat, SeatStatus.AVAILABLE, SeatStatus.CANCELLED);
         seat.update(order, SeatStatus.LOCKED);
 
+        // 주문 생성을 다 해놓고, 좌석 상태를 체크하는거에 대한 의문
+        validateSeatStatus(seat, SeatStatus.AVAILABLE, SeatStatus.CANCELLED);
         return OrderResponseDto.builder().seatId(seatId).build();
     }
 
