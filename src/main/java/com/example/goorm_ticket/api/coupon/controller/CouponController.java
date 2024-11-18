@@ -36,7 +36,7 @@ public class CouponController {
 
     @PostMapping("/dis/redis/{userId}/{couponId}")
     public CouponResponseDto allocateRedisCouponToUserWithDistributedLock(@PathVariable Long userId, @PathVariable Long couponId) {
-        return couponService.allocateRedisCouponToUserWithDistributedLock(userId, couponId);
+        return couponService.allocateRedisCouponToUser(userId, couponId);
     }
 
     /*유저의 쿠폰을 조회하는 api는 UserController로 옮기는게 낫지 않을까*/

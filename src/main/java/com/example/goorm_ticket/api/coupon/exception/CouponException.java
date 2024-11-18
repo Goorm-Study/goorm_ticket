@@ -23,6 +23,12 @@ public class CouponException extends RuntimeException {
         }
     }
 
+    public static class CouponDuplicateAllocateException extends CouponException {
+        public CouponDuplicateAllocateException(Long userId, Long couponId) {
+            super("user:" + userId + "가 이미 쿠폰: " + couponId + "을 발급 요청하였습니다.", "COUPON_DUPLICATE_ALLOCATE");
+        }
+    }
+
     public static class CouponNotFoundException extends CouponException {
         public CouponNotFoundException(Long couponId) {
             super("존재하지 않는 쿠폰입니다. 쿠폰 ID: " + couponId, "COUPON_NOT_FOUND");
@@ -32,6 +38,18 @@ public class CouponException extends RuntimeException {
     public static class UserNotFoundException extends CouponException {
         public UserNotFoundException(Long userId) {
             super("존재하지 않는 회원입니다. 회원 ID: " + userId, "USER_NOT_FOUND");
+        }
+    }
+
+    public static class CouponEventSerializationException extends CouponException {
+        public CouponEventSerializationException() {
+            super("쿠폰 발행 이벤트를 직렬화하는데 실패했습니다.", "COUPON_EVENT_SERIALIZATION_FAILED");
+        }
+    }
+
+    public static class CouponEventDeserializationException extends CouponException {
+        public CouponEventDeserializationException() {
+            super("쿠폰 발행 이벤트를 역직렬화하는데 실패했습니다.", "COUPON_EVENT_DESERIALIZATION_FAILED");
         }
     }
 
