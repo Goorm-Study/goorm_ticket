@@ -29,6 +29,13 @@ public class CouponResponseDto {
                 .build();
     }
 
+    public static CouponResponseDto ofWithMessage(Long id, String message) {
+        return CouponResponseDto.builder()
+                .id(id)
+                .message(message)
+                .build();
+    }
+
     //테스트용 - 메시지 받기
     public static CouponResponseDto of(Long id, String name, Long quantity,  String message) {
         return CouponResponseDto.builder()

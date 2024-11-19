@@ -40,8 +40,8 @@ public class Event {
 
     @Builder(access = AccessLevel.PRIVATE)
     private Event(String artist, String title, String description, String duration, String venue, int ticketPrice, LocalDateTime ticketOpenTime) {
-        this.artist = artist;
         this.title = title;
+        this.artist = artist;
         this.description = description;
         this.duration = duration;
         this.venue = venue;
@@ -49,10 +49,10 @@ public class Event {
         this.ticketOpenTime = ticketOpenTime;
     }
 
-    public static Event of(String artist, String title, String description, String duration, String venue, int ticketPrice, LocalDateTime ticketOpenTime) {
+    public static Event of(String title, String artist, String description, String duration, String venue, int ticketPrice, LocalDateTime ticketOpenTime) {
         return Event.builder()
-                .artist(artist)
                 .title(title)
+                .artist(artist)
                 .description(description)
                 .duration(duration)
                 .venue(venue)

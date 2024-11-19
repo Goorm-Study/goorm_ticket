@@ -41,9 +41,12 @@ public class OrderService {
         Long couponId = orderDto.getCouponId();
         Long userId = orderDto.getUserId();
         Long seatId = orderDto.getSeatId();
+        System.out.println("1차 로그");
 
         Seat seat = findSeatWithEvent(seatId);
+        System.out.println("2차 로그");
         User user = findUserById(userId);
+        System.out.println("3차 로그");
 
         // 이벤트 ID 일치 여부 확인
         if (!seat.getEvent().getId().equals(eventId)) {
@@ -57,6 +60,7 @@ public class OrderService {
 
         // 주문생성 orderStatus: `PENDING`
         Order order = Order.of(totalPrice, OrderStatus.PENDING, couponId, eventId, user);
+        System.out.println("4차 로그");
         orderRepository.save(order);
 
         // 좌석 상태 변경 LOCKED
@@ -94,7 +98,7 @@ public class OrderService {
     public OrderResponseDto cancel(Long eventId, OrderCancelDto orderDto) {
         Long seatId = orderDto.getSeatId();
 
-        Seat seat = findSeatById(seatId);
+        Seat seat = findSeatByIdWithLock(seatId);
         Order order = findOrderBySeat(seat);
 
         // 이벤트 ID 일치 여부 확인
@@ -117,6 +121,12 @@ public class OrderService {
      * 좌석 조회
      */
     public Seat findSeatById(Long seatId) {
+        return seatRepository.findById(seatId)
+                .orElseThrow(() -> new SeatNotFoundException(seatId));
+    }
+
+    @Transactional
+    public Seat findSeatByIdWithLock(Long seatId) {
         return seatRepository.findById(seatId)
                 .orElseThrow(() -> new SeatNotFoundException(seatId));
     }

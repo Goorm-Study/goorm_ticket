@@ -51,12 +51,11 @@ public class Coupon {
                 .build();
     }
 
-    public void decreaseQuantity(Long quantity) {
+    public synchronized void decreaseQuantity(Long quantity) {
         if(this.quantity < quantity) {
             throw new CouponQuantityShortageException(this.quantity, quantity);
         }
         this.quantity -= quantity;
     }
-
 
 }

@@ -39,6 +39,8 @@ dependencies {
     implementation 'org.springframework.retry:spring-retry'
     implementation 'org.springframework.boot:spring-boot-starter-aop'
 
+    //대기열
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
 }
 
