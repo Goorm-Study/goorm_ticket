@@ -1,9 +1,5 @@
-package com.example.goorm_ticket.domain.user.entity;
+package com.example.consumer.domain;
 
-import com.example.goorm_ticket.domain.coupon.entity.Coupon;
-import com.example.goorm_ticket.domain.coupon.entity.CouponEmbeddable;
-import com.example.goorm_ticket.domain.coupon.entity.UserCoupon;
-import com.example.goorm_ticket.domain.order.entity.Order;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

@@ -29,7 +29,6 @@ public abstract class AbstractCouponAllocation implements CouponAllocationStrate
                 .orElseThrow(() -> new CouponNotFoundException(couponId));
     }
 
-    @Transactional
     public CouponResponseDto decreaseCoupon(Long couponId) {
         Coupon coupon = findCouponById(couponId);
         coupon.decreaseQuantity(1L);

@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
 public class PessimisticLockStrategy extends AbstractCouponAllocation{
 
     public PessimisticLockStrategy(CouponRepository couponRepository, UserRepository userRepository) {
@@ -30,8 +29,8 @@ public class PessimisticLockStrategy extends AbstractCouponAllocation{
 
         CouponResponseDto couponResponseDto = decreaseCoupon(couponId);
 
-        List<CouponEmbeddable> userCoupons = user.getCoupons();
-        userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
+        //쿠폰 발급
+        user.addCoupon(coupon);
         userRepository.save(user);
 
         return couponResponseDto;

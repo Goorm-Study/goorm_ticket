@@ -1,6 +1,7 @@
 package com.example.goorm_ticket.api.coupon.service.strategy;
 
 import com.example.goorm_ticket.domain.coupon.dto.CouponResponseDto;
+import com.example.goorm_ticket.domain.coupon.entity.Coupon;
 import com.example.goorm_ticket.domain.coupon.entity.CouponEmbeddable;
 import com.example.goorm_ticket.domain.coupon.repository.CouponRepository;
 import com.example.goorm_ticket.domain.user.entity.User;
@@ -13,7 +14,6 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
 public class OptimisticLockStrategy extends AbstractCouponAllocation{
 
     public OptimisticLockStrategy(CouponRepository couponRepository, UserRepository userRepository) {
@@ -34,9 +34,10 @@ public class OptimisticLockStrategy extends AbstractCouponAllocation{
         // 쿠폰 수량 감소 처리
         CouponResponseDto couponResponseDto = decreaseCoupon(couponId);
 
-        // 유저 쿠폰 리스트에 추가
-        List<CouponEmbeddable> userCoupons = user.getCoupons();
-        userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
+        Coupon coupon = findCouponById(couponId);
+
+        //쿠폰 발급
+        user.addCoupon(coupon);
         userRepository.save(user);
 
         return couponResponseDto;

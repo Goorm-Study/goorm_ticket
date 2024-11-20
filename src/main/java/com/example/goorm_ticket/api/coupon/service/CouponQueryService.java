@@ -35,8 +35,8 @@ public class CouponQueryService {
     @Transactional(readOnly = true)
     public List<CouponResponseDto> getUserCoupons(Long userId) {
         User user = findUserById(userId);
-        return user.getCoupons().stream()
-                .map(coupon -> CouponResponseDto.of(coupon.getId(), coupon.getName()))
+        return user.getUserCoupons().stream()
+                .map(coupon -> CouponResponseDto.of(coupon.getId(), coupon.getCouponName()))
                 .collect(Collectors.toList());
     }
 

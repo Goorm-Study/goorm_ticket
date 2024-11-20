@@ -5,6 +5,7 @@ import com.example.goorm_ticket.api.coupon.exception.CouponException.UserNotFoun
 import com.example.goorm_ticket.domain.coupon.dto.CouponResponseDto;
 import com.example.goorm_ticket.domain.coupon.entity.Coupon;
 import com.example.goorm_ticket.domain.coupon.entity.CouponEmbeddable;
+import com.example.goorm_ticket.domain.coupon.entity.UserCoupon;
 import com.example.goorm_ticket.domain.coupon.repository.CouponRepository;
 import com.example.goorm_ticket.domain.user.entity.User;
 import com.example.goorm_ticket.domain.user.repository.UserRepository;
@@ -45,8 +46,8 @@ public class RedisLockStrategy{
 
         CouponResponseDto couponResponseDto = decreaseCoupon(couponId);
 
-        List<CouponEmbeddable> userCoupons = user.getCoupons();
-        userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
+        //쿠폰 발급
+        user.addCoupon(coupon);
         userRepository.save(user);
 
         return couponResponseDto;
