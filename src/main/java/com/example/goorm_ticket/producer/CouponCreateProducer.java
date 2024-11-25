@@ -18,7 +18,7 @@ public class CouponCreateProducer {
 
         try {
             kafkaTemplate.send("coupon_issue", message).get(); // 동기 호출로 전송 확인
-            System.out.println("Message sent successfully!");
+            System.out.println("Message sent successfully!, userId:  " + userId);
         } catch (Exception e) {
             System.err.println("Failed to send message: " + e.getMessage());
         }

@@ -3,8 +3,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import java.time.LocalDateTime;
+import lombok.RequiredArgsConstructor;
 
 @Entity
+@RequiredArgsConstructor
 public class FailedEvent {
 
     @Id
@@ -13,10 +16,13 @@ public class FailedEvent {
 
     private Long userId;
 
-    public FailedEvent() {
-    }
+    private String message;
 
-    public FailedEvent(Long userId) {
+    private LocalDateTime timestamp;
+
+    public FailedEvent(Long userId, String message) {
         this.userId = userId;
+        this.message = message;
+        this.timestamp = LocalDateTime.now();
     }
 }

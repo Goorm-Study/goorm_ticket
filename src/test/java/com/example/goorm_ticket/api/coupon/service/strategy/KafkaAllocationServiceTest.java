@@ -77,6 +77,43 @@ class KafkaAllocationServiceTest {
     }
 
 
+    @DisplayName("요청이 실패하면 재시도하고, 재시도도 실패하면 DLQ처리된다.")
+    @Test
+    void allocateCouponTest_DLQ() throws InterruptedException {
+        // given
+        int threadCount = 1000;
+        ExecutorService executorService = Executors.newFixedThreadPool(32);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        createUsers(1000);
+        Coupon coupon = createCoupon(100L);
+        String couponKey = "coupon" + coupon.getId();
+
+        redisTemplate.opsForValue().set(couponKey, "0");
+
+        // when
+        for (int i = 1; i < threadCount+1; i++) {
+            long userId = i;
+
+            executorService.submit(() -> {
+                try {
+                    kafkaAllocationService.allocateCoupon(userId, 1L);
+                } catch (Exception ignored) {
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+        Thread.sleep(10000);
+
+        // then
+        long count = userCouponRepository.count();
+        Assertions.assertThat(count).isEqualTo(100); // 정확히 100개 발급
+    }
+
+
     private Coupon createCoupon(Long quantity) {
         Coupon coupon = Coupon.of(quantity, "coupon1", 0.15, LocalDateTime.of(2024, 12, 30, 0, 0));
         return couponRepository.save(coupon);
