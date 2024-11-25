@@ -1,7 +1,6 @@
 package com.example.goorm_ticket.api.coupon.service.strategy;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import com.example.goorm_ticket.api.coupon.service.kafka.KafkaAllocationService;
 import com.example.goorm_ticket.domain.coupon.entity.Coupon;
 import com.example.goorm_ticket.domain.coupon.repository.CouponCountRepository;
 import com.example.goorm_ticket.domain.coupon.repository.CouponRepository;
@@ -95,7 +94,5 @@ class KafkaAllocationServiceTest {
         User user = User.builder().username("tester").password("1234").build();
         return userRepository.save(user);
     }
-
-
 
 }

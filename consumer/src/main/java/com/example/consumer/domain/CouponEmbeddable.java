@@ -39,4 +39,5 @@ public class CouponEmbeddable {
     public int hashCode() {
         return Objects.hash(id, name);
     }
+
 }

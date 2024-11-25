@@ -2,12 +2,10 @@ package com.example.consumer.consumer;
 
 
 import com.example.consumer.domain.Coupon;
-import com.example.consumer.domain.CouponEmbeddable;
 import com.example.consumer.domain.User;
 import com.example.consumer.repository.CouponRepository;
 import com.example.consumer.repository.FailedEventRepository;
 import com.example.consumer.repository.UserRepository;
-import java.util.List;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,20 +38,14 @@ public class CouponCreatedConsumer {
         Long couponId = json.getLong("couponId");
 
         try {
-            logger.info("user조회 전");
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-            logger.info("user조회 후");
 
             Coupon coupon = couponRepository.findById(couponId)
                     .orElseThrow(() -> new RuntimeException("쿠폰을 찾을 수 없습니다."));
-            logger.info("쿠폰 조회 후");
 
-            logger.info("쿠폰 발급 전");
             //쿠폰 발급
             user.addCoupon(coupon);
-            logger.info("쿠폰 발급 후");
-
             userRepository.save(user);
 
         } catch (Exception e) {
@@ -61,4 +53,6 @@ public class CouponCreatedConsumer {
             failedEventRepository.save(new FailedEvent(userId));
         }
     }
+
+
 }
