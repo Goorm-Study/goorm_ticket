@@ -15,5 +15,10 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
     @Query(value = "select c from Coupon c where c.id = :id")
     Optional<Coupon> findByIdWithPessimisticLock(@Param("id") Long id);
 
-
+    // TODO: QueryDsl로 바꿔보기
+    @Query(value = "SELECT EXISTS (" +
+            "  SELECT 1 FROM user_coupon " +
+            "  WHERE user_id = :userId AND coupon_id = :couponId" +
+            ")", nativeQuery = true)
+    Long existsByUserIdAndCouponId(@Param("userId") Long userId, @Param("couponId") Long couponId);
 }

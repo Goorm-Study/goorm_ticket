@@ -3,6 +3,7 @@ package com.example.goorm_ticket.api.coupon.controller;
 import com.example.goorm_ticket.api.coupon.service.*;
 import com.example.goorm_ticket.domain.coupon.dto.CouponResponseDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,9 +35,10 @@ public class CouponController {
         return couponService.allocateCouponToUserWithDistributedLock(userId, couponId);
     }
 
-    @PostMapping("/dis/redis/{userId}/{couponId}")
-    public CouponResponseDto allocateRedisCouponToUserWithDistributedLock(@PathVariable Long userId, @PathVariable Long couponId) {
-        return couponService.allocateRedisCouponToUser(userId, couponId);
+    @PostMapping("/redis/{userId}/{couponId}")
+    public ResponseEntity<CouponResponseDto> allocateRedisCouponToUser(@PathVariable Long userId, @PathVariable Long couponId) {
+        CouponResponseDto couponResponseDto = couponService.allocateRedisCouponToUser(userId, couponId);
+        return ResponseEntity.accepted().body(couponResponseDto);
     }
 
     /*유저의 쿠폰을 조회하는 api는 UserController로 옮기는게 낫지 않을까*/

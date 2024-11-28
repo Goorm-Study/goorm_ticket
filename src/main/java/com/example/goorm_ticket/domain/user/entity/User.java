@@ -26,7 +26,11 @@ public class User {
     private String password;
 
     @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "user_coupon", joinColumns = @JoinColumn(name = "user_id"))
+    @CollectionTable(name = "user_coupon",
+            joinColumns = @JoinColumn(name = "user_id"),
+            // 한 유저는 같은 쿠폰을 중복해서 발급받을 수 없음
+            uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "coupon_id"})
+    )
     private List<CouponEmbeddable> coupons = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)

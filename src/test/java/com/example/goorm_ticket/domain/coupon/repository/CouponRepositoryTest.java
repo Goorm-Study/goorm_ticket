@@ -8,7 +8,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -90,7 +89,7 @@ class CouponRepositoryTest {
         // then
         Optional<User> foundUser = userRepository.findById(savedUser.getId());
         assertEquals(1, foundUser.get().getCoupons().size());
-        assertEquals("coupon", foundUser.get().getCoupons().get(0).getName());
+        assertEquals("coupon", foundUser.get().getCoupons().get(0).getCouponName());
     }
 
     private static Coupon createCoupon() {

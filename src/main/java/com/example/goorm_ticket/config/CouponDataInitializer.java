@@ -30,7 +30,7 @@ public class CouponDataInitializer {
     @EventListener(ApplicationReadyEvent.class)
     public void initializeCouponData() {
         List<User> users = new ArrayList<>();
-        for (int i = 1; i <= 200; i++) {
+        for (int i = 1; i <= 5; i++) {
             User user = createUser("tester" + i);
             users.add(user);
         }
@@ -39,6 +39,8 @@ public class CouponDataInitializer {
         Coupon coupon2 = Coupon.of(100L, "coupon2", 20.0, LocalDateTime.of(2024, 12, 31, 0, 0));
         Coupon coupon3 = Coupon.of(100L, "coupon3", 20.0, LocalDateTime.of(2024, 12, 31, 0, 0));
         couponRepository.saveAll(List.of(coupon1, coupon2, coupon3));
+
+        stringRedisTemplate.getConnectionFactory().getConnection().flushDb();
         cacheCouponToRedis(coupon1);
         cacheCouponToRedis(coupon2);
         cacheCouponToRedis(coupon3);

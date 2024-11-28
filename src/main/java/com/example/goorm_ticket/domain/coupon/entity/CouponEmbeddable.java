@@ -1,6 +1,5 @@
 package com.example.goorm_ticket.domain.coupon.entity;
 
-import com.example.goorm_ticket.domain.coupon.dto.CouponResponseDto;
 import jakarta.persistence.Embeddable;
 import lombok.*;
 
@@ -10,19 +9,19 @@ import java.util.Objects;
 @NoArgsConstructor
 @Getter
 public class CouponEmbeddable {
-    private Long id;
-    private String name;
+    private Long couponId;
+    private String couponName;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private CouponEmbeddable(Long id, String name) {
-        this.id = id;
-        this.name = name;
+    private CouponEmbeddable(Long couponId, String couponName) {
+        this.couponId = couponId;
+        this.couponName = couponName;
     }
 
-    public static CouponEmbeddable of(Long id, String name) {
+    public static CouponEmbeddable of(Long couponId, String couponName) {
         return CouponEmbeddable.builder()
-                .id(id)
-                .name(name)
+                .couponId(couponId)
+                .couponName(couponName)
                 .build();
     }
 
@@ -31,11 +30,11 @@ public class CouponEmbeddable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         CouponEmbeddable that = (CouponEmbeddable) o;
-        return Objects.equals(id, that.id) && Objects.equals(name, that.name);
+        return Objects.equals(couponId, that.couponId) && Objects.equals(couponName, that.couponName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name);
+        return Objects.hash(couponId, couponName);
     }
 }

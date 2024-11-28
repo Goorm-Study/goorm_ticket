@@ -1,16 +1,21 @@
 package com.example.goorm_ticket.api.coupon.service;
 
+import com.example.goorm_ticket.domain.coupon.dto.CouponRequestDto;
 import com.example.goorm_ticket.domain.coupon.dto.CouponResponseDto;
 import com.example.goorm_ticket.domain.coupon.entity.Coupon;
 import com.example.goorm_ticket.domain.coupon.entity.CouponEmbeddable;
 import com.example.goorm_ticket.domain.coupon.repository.CouponRepository;
 import com.example.goorm_ticket.domain.user.entity.User;
 import com.example.goorm_ticket.domain.user.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -135,6 +140,35 @@ class CouponServiceIntegrationTest {
         assertThatThrownBy(() -> couponService.decreaseCoupon(coupon.getId()))
                 .isInstanceOf(CouponQuantityShortageException.class)
                 .hasMessageContaining("남은 쿠폰의 개수가 요청한 개수보다 적습니다.");
+    }
+
+
+    public void addCouponToUserCoupons(User user, CouponResponseDto couponResponseDto) {
+        List<CouponEmbeddable> userCoupons = user.getCoupons();
+        try {
+            userCoupons.add(CouponEmbeddable.of(couponResponseDto.getId(), couponResponseDto.getName()));
+            // 여기서 쿼리를 flush 해줘야 하는데
+
+        } catch(Exception e) {
+            throw new CouponDuplicateAllocateException(user.getId(), couponResponseDto.getId());
+        }
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("유저는 같은 쿠폰을 중복해서 발급받을 수 없다.")
+    void allocateCoupon_duplicateAllocate() {
+        // given
+        User user = createUser("tester");
+        userRepository.save(user);
+        Coupon coupon = createCoupon("coupon");
+        couponRepository.save(coupon);
+
+        // when, then
+        CouponResponseDto couponResponseDto = couponService.decreaseCoupon(coupon.getId());
+        addCouponToUserCoupons(user, couponResponseDto);
+        assertThatThrownBy(() -> addCouponToUserCoupons(user, couponResponseDto))
+                .isInstanceOf(CouponDuplicateAllocateException.class);
     }
 
     @Test
