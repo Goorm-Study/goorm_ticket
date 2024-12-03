@@ -16,11 +16,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.goorm_ticket.config.RedisCouponConstants;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static com.example.goorm_ticket.api.coupon.exception.CouponException.*;
@@ -130,14 +132,23 @@ public class CouponService {
     }
 
     public CouponResponseDto allocateRedisCouponToUser(Long userId, Long couponId) {
-        CouponEventDto couponEventDto = decreaseCouponFromRedis(userId, couponId, 1L); // 이거 예외 발생했을 때 왜 나머지 코드가 실행되는거지??
+        CouponEventDto couponEventDto = decreaseCouponFromRedis(userId, couponId, 1L);
         if (couponEventDto == null) {
             return null;
         }
         // 만약 여기서 애플리케이션 서버가 다운된다면?
-        couponKafkaProducer.publishEvent(couponEventDto);
+        publishCouponEvent(couponEventDto);
         return CouponResponseDto.of(couponId);
     }
+
+    private void publishCouponEvent(CouponEventDto couponEventDto) {
+        CompletableFuture<SendResult<String, CouponEventDto>> future = couponKafkaProducer.publishEvent(couponEventDto);
+        future.whenComplete((result, ex) -> {
+            Long eventId = result.getProducerRecord().value().getEventId();
+            removePendingEvent(eventId);
+        });
+    }
+
     @Transactional
     public void addCouponToUserCoupons(User user, CouponResponseDto couponResponseDto) {
         List<CouponEmbeddable> userCoupons = user.getCoupons();
@@ -162,14 +173,8 @@ public class CouponService {
         return couponRepository.findByIdWithPessimisticLock(couponId).orElseThrow(() -> new CouponException.CouponNotFoundException(couponId));
     }
 
-//    private Coupon cacheCouponToRedis(String key, Long couponId) {
-//        Coupon coupon = findCouponById(couponId);
-//        stringRedisTemplate.opsForHash().put(key, "couponId", couponId.toString());
-//        stringRedisTemplate.opsForHash().put(key, "quantity", coupon.getQuantity().toString());
-//        return coupon;
-//    }
-
     public void removePendingEvent(Long eventId) {
         stringRedisTemplate.opsForSet().remove(RedisCouponConstants.REDIS_PENDING_EVENT_KEY, eventId.toString());
+        stringRedisTemplate.opsForHash().delete("PENDING:" + eventId);
     }
 }

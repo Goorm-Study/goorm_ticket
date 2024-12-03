@@ -5,7 +5,7 @@ import lombok.Getter;
 import java.util.HashMap;
 
 @Getter
-public class FailedCouponEvent {
+public class CancelledCouponEvent {
     // key: couponId, value: quantity
     private final HashMap<Long, Long> couponQuantity = new HashMap<>();
 
