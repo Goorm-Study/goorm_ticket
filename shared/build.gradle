@@ -3,8 +3,3 @@ plugins {
     id 'org.springframework.boot' version '3.3.4'
     id 'io.spring.dependency-management'
 }
-
-dependencies {
-    implementation project(':shared')
-    implementation 'org.json:json:20230227'
-}

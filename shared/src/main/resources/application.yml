@@ -1,0 +1,36 @@
+#spring:
+#  profiles:
+#    active: mysql
+#  main:
+#    allow-bean-definition-overriding: true
+#  sql:
+#    init:
+#      mode: always
+#  redis:
+#    host: localhost
+#    port: 6379
+#
+#  data:
+#    redis:
+#      host: localhost
+#      port: 6379
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3307/coupon_example
+    username: root
+    password: 1234
+
+  redis:
+    host: localhost
+    port: 6379
+  kafka:
+    consumer:
+      enable-auto-commit: false # 자동 커밋 비활성화
+    listener:
+      ack-mode: manual # 수동 커밋
