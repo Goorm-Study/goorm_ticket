@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  redis-master:
+    image: redis:latest
+    container_name: "redis-master"
+    ports:
+      - "6379:6379"
+    command: [ "redis-server" ]
+    volumes:
+      - master-data:/data
+    networks:
+      - redis-net
+
+  redis-slave1:
+    image: redis:latest
+    command: redis-server --slaveof redis-master 6379
+    links:
+      - redis-master
+    container_name: "redis-slave1"
+    networks:
+      - redis-net
+
+  redis-slave2:
+    image: redis:latest
+    command: redis-server --slaveof redis-master 6379
+    links:
+      - redis-master
+    container_name: "redis-slave2"
+    networks:
+      - redis-net
+
+  sentinel-1:
+    build: sentinel
+    ports:
+      - "5000:26379"
+    env_file:
+      - .env
+    depends_on:
+      - redis-master
+      - redis-slave1
+      - redis-slave2
+    container_name: "sentinel1"
+    networks:
+      - redis-net
+
+  sentinel-2:
+    build: sentinel
+    ports:
+      - "5001:26379"
+    env_file:
+      - .env
+    depends_on:
+      - redis-master
+      - redis-slave1
+      - redis-slave2
+    container_name: "sentinel2"
+    networks:
+      - redis-net
+
+  sentinel-3:
+    build: sentinel
+    ports:
+      - "5002:26379"
+    env_file:
+      - .env
+    depends_on:
+      - redis-master
+      - redis-slave1
+      - redis-slave2
+    container_name: "sentinel3"
+    networks:
+      - redis-net
+
+volumes:
+  master-data:
+  slave1-data:
+  slave2-data:
+networks:
+  redis-net:
+    driver: bridge

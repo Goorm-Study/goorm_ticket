@@ -1,8 +1,10 @@
 package com.example.goorm_ticket.api.coupon.controller;
 
 import com.example.goorm_ticket.api.coupon.service.CouponService;
+import com.example.goorm_ticket.api.user.service.UserService;
 import com.example.goorm_ticket.domain.coupon.dto.CouponRequestDto;
 import com.example.goorm_ticket.domain.coupon.dto.CouponResponseDto;
+import com.example.goorm_ticket.global.redis.RedisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +16,7 @@ import java.util.List;
 public class CouponController {
 
     private final CouponService couponService;
+    private final RedisService redisService;
 
     @GetMapping
     public List<CouponResponseDto> getAllCoupons() {
@@ -29,6 +32,13 @@ public class CouponController {
     @GetMapping("/{userId}/coupons")
     public List<CouponResponseDto> getUserCoupons(@PathVariable Long userId) {
         return couponService.getUserCoupons(userId);
+    }
+
+    @PostMapping("/issue/{user_id}/{couponId}")
+    public String issueCoupon(@PathVariable("user_id") String userId, @PathVariable("couponId") String couponId) {
+        redisService.issueCoupon(couponId, userId);
+
+        return couponId + " issued to " + userId;
     }
 
 }

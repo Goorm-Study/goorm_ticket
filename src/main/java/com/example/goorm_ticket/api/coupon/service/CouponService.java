@@ -53,7 +53,7 @@ public class CouponService {
         Coupon coupon = findCouponById(couponId);
         coupon.decreaseQuantity(1L);
 
-        couponRepository.save(coupon);
+        couponRepository.save(coupon); // 조회 시 영속성 상태가 되어 자동으로 더티체킹을 실행하기에 save를 할 필요가 없다.
 
         return CouponResponseDto.of(coupon.getId(), coupon.getName());
     }
